@@ -1,0 +1,12 @@
+* An ultrafast Bruker BAF to MzMl converter.
+
+
+This is highly experimental so there is no documentation yet.
+
+It seems that we can achieve a conversion in 1 to 2 seconds of a 200M BAF file (with MS1 and MS2).
+
+There is a lot left to do for it to be really usable.
+
+The purpose is NOT to make it a feature complete converter for every instrument, this is an
+internal tool that we are sharing the code if someone find any use to it.
+

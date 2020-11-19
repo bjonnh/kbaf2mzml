@@ -1,0 +1,7 @@
+/lib/libbaf2sql_c.so
+/stuff/
+/lib/libbaf2sql_wrapper.so
+/src/main/c/libbaf2sql_wrapper.so
+/build/
+/.idea/
+/.gradle/
