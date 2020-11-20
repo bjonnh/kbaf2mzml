@@ -18,16 +18,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import net.nprod.baf2mzml.BAF2SQL
 import net.nprod.baf2mzml.saveAsMzMl
+import java.io.File
 
 fun main(args: Array<String>) {
-    val analysis = "stuff/bae-2-3-3-WELL-43_1-42_1_1730.d/analysis.baf"
-    val converter = BAF2SQL(analysis)
-
-    converter.saveAsMzMl("/tmp/out.mzml")
-
-    println("Ready to close")
-
-    converter.close()
-
-    println(converter.lasterror)
+    args.map {
+        val analysis = File(it, "analysis.baf")
+        println("Converting ${analysis.absolutePath}")
+        val converter = BAF2SQL(analysis.absolutePath)
+        converter.addLevelFilter(1000.0)
+        val parent = analysis.parent
+        converter.saveAsMzMl(parent.substring(0, parent.length - 2) + ".mzML")
+        println(converter.lasterror)
+        converter.close()
+    }
 }

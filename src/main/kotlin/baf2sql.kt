@@ -39,6 +39,7 @@ class NumElements(var ret: Int, var value: Long) {
  * this assumes you have enough memory, we are not going to stream from disk
  */
 class BAF2SQL(val filename: String) {
+    private var levelFilter: Double? = null
     private var sqliteDb: String? = null
     private var storage: BinaryStorage? = null
     private var connection: Connection? = null
@@ -188,7 +189,8 @@ class BAF2SQL(val filename: String) {
                     segment = rs.getInt(3),
                     acquisitionKey = acquisitionKeys[rs.getInt(4)]
                         ?: throw RuntimeException("Invalid acquisition key for spectrum $id: ${rs.getInt(4)}"),
-                    acquisitionData = spectrumAcquisitionData[id] ?: throw RuntimeException("No acquisition data for spectrum $id"),
+                    acquisitionData = spectrumAcquisitionData[id]
+                        ?: throw RuntimeException("No acquisition data for spectrum $id"),
                     parent = parentId,
                     mzAcqRangeLower = rs.getInt(6),
                     mzAcqRangeUpper = rs.getInt(7),
@@ -238,14 +240,26 @@ class BAF2SQL(val filename: String) {
         if (mzId == null || intensityId == null || snrId == null) return null
         val localStorage =
             storage ?: throw RuntimeException("Storage is not accessible, something is wrong, did you open the file?")
+        val mzArray = c_baf2sql_read_double_array(localStorage, mzId)?.array
+            ?: throw RuntimeException("Cannot read the MZ array. File is probably broken.")
+        val intensityArray = c_baf2sql_read_double_array(localStorage, intensityId)?.array
+            ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken.")
+
+        val level = levelFilter
+        val mzArrayProcessed: DoubleArray
+        val intensityArrayProcessed: DoubleArray
+        if (level == null) {
+            mzArrayProcessed = mzArray
+            intensityArrayProcessed = intensityArray
+        } else {
+            val indices = intensityArray.withIndex().filter { it.value > level }.map { it.index }
+            mzArrayProcessed = indices.map { mzArray[it] }.toDoubleArray()
+            intensityArrayProcessed = indices.map { intensityArray[it] }.toDoubleArray()
+        }
 
         return LineData(
-            c_baf2sql_read_double_array(localStorage, mzId)?.array
-                ?: throw RuntimeException("Cannot read the MZ array. File is probably broken."),
-            c_baf2sql_read_double_array(localStorage, intensityId)?.array
-                ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken."),
-            c_baf2sql_read_double_array(localStorage, snrId)?.array
-                ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken."),
+            mzArrayProcessed,
+            intensityArrayProcessed,
         )
     }
 
@@ -256,4 +270,7 @@ class BAF2SQL(val filename: String) {
     external fun c_baf2sql_set_num_threads(threads: Int)
     external fun c_baf2sql_array_get_num_elements(handle: BinaryStorage, id: Long): NumElements
     external fun c_baf2sql_read_double_array(handle: BinaryStorage, id: Long): BAFDoubleArray?
+    fun addLevelFilter(d: Double) {
+        levelFilter = d
+    }
 }
