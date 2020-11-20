@@ -19,7 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package net.nprod.baf2mzml
 
 import net.nprod.baf2mzml.schema.LineData
-import net.nprod.baf2mzml.schema.ProfileData
 import net.nprod.baf2mzml.schema.Spectrum
 import org.apache.commons.text.StringEscapeUtils
 import java.io.File
@@ -27,142 +26,12 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 
-/*
-class BAFActivationInfo(val spectrum: Spectrum) : ActivationInfo {
-    override fun getActivationType(): ActivationType = ActivationType.CID
-
-    override fun getActivationEnergy(): Double = spectrum.acquisitionData.collisionEnergyAct ?: 0.0
-}
-
-class BAFIsolationInfo(val spectrum: Spectrum) : IsolationInfo {
-    val range: Double = spectrum.acquisitionData.quadrupoleIsolationresolutionAct ?: 10.0
-    override fun getIsolationMzRange(): Range<Double> = Range.open(
-        (spectrum.acquisitionData.msmsIsolationmassAct ?: 0.0) - range,
-        (spectrum.acquisitionData.msmsIsolationmassAct ?: 0.0) + range
-    )
-
-    override fun getIonInjectTime(): Float? = null
-
-    override fun getPrecursorMz(): Double? {
-        println(spectrum.acquisitionData.msmsIsolationmassAct)
-        return spectrum.acquisitionData.msmsIsolationmassAct
-    }
-
-    override fun getPrecursorCharge(): Int = 0
-
-    override fun getPrecursorScanNumber(): Int = spectrum.parent
-
-    override fun getActivationInfo(): ActivationInfo = BAFActivationInfo(spectrum)
-}
-
-class BAFMsScan(val spectrum: Spectrum) : MzMLScan() {
-    override fun getSpectrumType(): MsSpectrumType =
-        MsSpectrumType.CENTROIDED
-
-    override fun getNumberOfDataPoints(): Int = spectrum.lineData?.mz?.size ?: 0
-
-    override fun getMzValues(array: DoubleArray?): DoubleArray = spectrum.lineData?.mz
-        ?: throw RuntimeException("Sorry no centroided data for scan ${spectrum.id}")
-
-    override fun getIntensityValues(array: FloatArray?): FloatArray =
-        spectrum.lineData?.intensity?.map { it.toFloat() }?.toFloatArray()
-            ?: throw RuntimeException("Sorry no centroided data for scan ${spectrum.id}")
-
-    override fun getTIC(): Float = spectrum.maxIntensity.toFloat()
-
-    override fun getMzRange(): Range<Double> =
-        Range.open(spectrum.mzAcqRangeLower.toDouble(), spectrum.mzAcqRangeUpper.toDouble())
-
-    override fun getMzTolerance(): MzTolerance? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getRawDataFile(): RawDataFile? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getScanNumber(): Int = spectrum.id
-
-    override fun getScanDefinition(): String = "DEF"
-
-    override fun getMsFunction(): String = "FUN"
-
-    override fun getMsLevel(): Int = spectrum.acquisitionKey.msLevel + 1
-
-    override fun getRetentionTime(): Float = spectrum.rt.toFloat()
-
-    override fun getScanningRange(): Range<Double> = mzRange
-
-    override fun getSourceInducedFragmentation() = BAFActivationInfo(spectrum)
-
-    override fun getIsolations(): List<IsolationInfo> = listOf(BAFIsolationInfo(spectrum)) // TODO!!
-}
-/*
-class BAFAsRawDataFile(val baf2SQL: BAF2SQL) : MzMLRawDataFile(
-
-) {
-    override fun getName(): String =
-        baf2SQL.filename
-
-    override fun getOriginalFile(): Optional<File> =
-        Optional.of(File(baf2SQL.filename))
-
-    override fun getRawDataFileType(): FileType =
-        FileType.UNKNOWN
-
-    override fun getMsFunctions(): List<String> {
-        TODO("Get MsFunctions Not yet implemented")
-    }
-
-    override fun getScans(): List<MsScan> {
-        val listOfScans = mutableListOf<MsScan>()
-        baf2SQL.spectraDataAct {
-            // MzMine doesn't like empty scans so we remove them
-            if ((it.lineData?.mz?.size ?: 0) > 0)
-                listOfScans.add(BAFMsScan(it))
-        }
-        return listOfScans
-    }
-
-    override fun getChromatograms(): List<Chromatogram> = listOf()
-
-    override fun dispose() {
-        TODO("Dispose Not yet implemented")
-    }
-}*/
-*/
 fun BAF2SQL.saveAsMzMl(filename: String) {
-
     val writer = MzMLWriter(File(filename), "Test", this)
     writer.execute()
-    /*val scans = mutableListOf<MsScan>()
-    spectraDataAct {
-        // MzMine doesn't like empty scans so we remove them
-        if ((it.lineData?.mz?.size ?: 0) > 0)
-            scans.add(BAFMsScan(it))
-    }
-
-    val dataFile = MzMLRawDataFile(
-        File(this.filename), listOf(), scans,
-        listOf() // chromatograms
-    )
-
-
-    val exporter = MzMLFileExportMethod(
-        dataFile,
-        File(filename),
-        MzMLCompressionType.NO_COMPRESSION,
-        MzMLCompressionType.NO_COMPRESSION
-    )
-
-    exporter.execute()*/
-    // Impossible to use MSDK, files are not valid (doesn't take the precursor into account for example)
-
-
 }
 
-// TODO: MS2
-class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
+class MzMLWriter(file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
 
     val writer = file.bufferedWriter()
     var position = 0
@@ -254,6 +123,7 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
         )
     }
 
+    // TODO!
     fun addRun() =
         writeln(
             "<run id=\"Experiment_x0020_1\" defaultInstrumentConfigurationRef=\"LCQ_x0020_Deca\" sampleRef=\"_x0032_0090101_x0020_-_x0020_Sample_x0020_1\" startTimeStamp=\"2007-06-27T15:23:45.00035\" defaultSourceFileRef=\"${
@@ -281,7 +151,6 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
                 0 -> writeln("<referenceableParamGroupRef ref=\"CommonMS1SpectrumParams\"/>")
                 1 -> writeln("<referenceableParamGroupRef ref=\"CommonMS2SpectrumParams\"/>")
             }
-
 
             msLevel(spectrum.acquisitionKey.msLevel + 1)
             centroid()
@@ -314,7 +183,7 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
                 writeln("  <precursor spectrumRef=\"scan=${spectrum.parent}\">")
                 writeln("    <selectedIonList count=\"1\">")
                 writeln("      <selectedIon>")
-                writeln("        <cvParam cvRef=\"MS\" accession=\"MS:1000744\" name=\"selected ion m/z\" value=\"${spectrum.acquisitionData.msmsIsolationmassAct }\" unitCvRef=\"MS\" unitAccession=\"MS:1000040\" unitName=\"m/z\"/>")
+                writeln("        <cvParam cvRef=\"MS\" accession=\"MS:1000744\" name=\"selected ion m/z\" value=\"${spectrum.acquisitionData.msmsIsolationmassAct}\" unitCvRef=\"MS\" unitAccession=\"MS:1000040\" unitName=\"m/z\"/>")
                 writeln("      </selectedIon>")
                 writeln("    </selectedIonList>")
                 writeln("    <activation>")
@@ -323,30 +192,11 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
                     "      <cvParam cvRef=\"MS\" accession=\"MS:1000045\" name=\"collision energy\" value=\"${spectrum.acquisitionData.collisionEnergyAct ?: 0.0}\" unitCvRef=\"UO\"" +
                             " unitAccession=\"UO:0000266\" unitName=\"electronvolt\"/>"
                 )
-
                 writeln("    </activation>")
                 writeln("  </precursor>")
                 writeln("</precursorList>")
             }
         }
-        """
-                        <isolationWindow>
-                            <cvParam cvRef="MS" accession="MS:1000827" name="isolation window target m/z"
-                                     value="445.30000000000001" unitCvRef="MS" unitAccession="MS:1000040"
-                                     unitName="m/z"/>
-                            <cvParam cvRef="MS" accession="MS:1000828" name="isolation window lower offset" value="0.5"
-                                     unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
-                            <cvParam cvRef="MS" accession="MS:1000829" name="isolation window upper offset" value="0.5"
-                                     unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
-                        </isolationWindow>
-                        <selectedIonList count="1">
-                            <selectedIon>
-                                <cvParam cvRef="MS" accession="MS:1000744" name="selected ion m/z" value="445.33999999999997" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
-                                <cvParam cvRef="MS" accession="MS:1000042" name="peak intensity" value="120053"/>
-                                <cvParam cvRef="MS" accession="MS:1000041" name="charge state" value="2"/>
-                            </selectedIon>
-                        </selectedIonList>
-                   """
     }
 
     private fun scanList(spectrum: Spectrum) {
@@ -367,14 +217,17 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
         if (lineData == null) throw RuntimeException("Sorry only line data for now")
         writeln("<binaryDataArrayList count=\"2\">")
         binaryDataArray(lineData.mz, mz = true)
-        binaryDataArray(lineData.intensity, mz = false)
+        binaryDataArray(lineData.intensity.map { it.toFloat() }.toFloatArray(), mz = false)
         writeln("</binaryDataArrayList>")
     }
 
-    private fun binaryDataArray(data: DoubleArray, mz: Boolean) {
-        val encode = base64ArrayEncoder(data)
-        writeln("<binaryDataArray encodedLength=\"${encode.size}\" dataProcessingRef=\"kbaf2mzml\">")
-        writeln("  <cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" value=\"\"/>")
+    private fun binaryDataArrayWriter(encoded: ByteArray, mz: Boolean, double: Boolean) {
+        writeln("<binaryDataArray encodedLength=\"${encoded.size}\" dataProcessingRef=\"kbaf2mzml\">")
+        if (double) {
+            writeln("  <cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" value=\"\"/>")
+        } else {
+            writeln("  <cvParam cvRef=\"MS\" accession=\"MS:1000521\" name=\"32-bit float\" value=\"\"/>")
+        }
         writeln("  <cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" value=\"\"/>")
         if (mz) {
             writeln("<cvParam cvRef=\"MS\" accession=\"MS:1000514\" name=\"m/z array\" value=\"\" unitCvRef=\"MS\" unitAccession=\"MS:1000040\" unitName=\"m/z\"/>")
@@ -382,10 +235,16 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
             writeln("<cvParam cvRef=\"MS\" accession=\"MS:1000515\" name=\"intensity array\" value=\"\" unitCvRef=\"MS\" unitAccession=\"MS:1000131\" unitName=\"number of counts\"/>")
         }
         write("<binary>")
-        writeByteArray(encode)
+        writeByteArray(encoded)
         write("</binary>")
         writeln("</binaryDataArray>")
     }
+
+    private fun binaryDataArray(data: DoubleArray, mz: Boolean) =
+        binaryDataArrayWriter(base64ArrayEncoder(data), mz, true)
+
+    private fun binaryDataArray(data: FloatArray, mz: Boolean) =
+        binaryDataArrayWriter(base64ArrayEncoder(data), mz, false)
 
     private fun base64ArrayEncoder(data: DoubleArray): ByteArray {
         var encodedData: ByteArray? = null
@@ -393,6 +252,17 @@ class MzMLWriter(val file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
         buffer.order(ByteOrder.LITTLE_ENDIAN)
         for (d in data) {
             buffer.putDouble(d)
+        }
+        encodedData = buffer.array()
+        return Base64.getEncoder().encode(encodedData)
+    }
+
+    private fun base64ArrayEncoder(data: FloatArray): ByteArray {
+        var encodedData: ByteArray? = null
+        val buffer = ByteBuffer.allocate(data.size * 4)
+        buffer.order(ByteOrder.LITTLE_ENDIAN)
+        for (d in data) {
+            buffer.putFloat(d)
         }
         encodedData = buffer.array()
         return Base64.getEncoder().encode(encodedData)
