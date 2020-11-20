@@ -1,2 +1,4 @@
-rootProject.name = "kbaf2mzxml"
+rootProject.name = "kbaf2mzml"
 
+include(":baf2sql_adapter")
+include(":converter")

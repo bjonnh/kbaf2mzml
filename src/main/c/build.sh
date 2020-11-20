@@ -1,2 +1,0 @@
-clear
-gcc -O3 -march=native baf2sql_wrapper.c -o libbaf2sql_wrapper.so -shared -L../../../lib -I/usr/lib/jvm/java-14-openjdk/include -I/usr/lib/jvm/java-14-openjdk/include/linux -lbaf2sql_c && cp libbaf2sql_wrapper.so ../../../lib

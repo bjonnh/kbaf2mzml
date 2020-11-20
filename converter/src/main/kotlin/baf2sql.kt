@@ -51,7 +51,8 @@ class BAF2SQL(val filename: String) {
         get() = c_baf2sql_get_last_error_string()
 
     init {
-        System.load(File("lib/libbaf2sql_wrapper.so").absolutePath)
+        System.load(File("lib/libbaf2sql_c.so").absolutePath)
+        System.load(File("lib/libbaf2sql_adapter.so").absolutePath)
         c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
         sqliteDb = c_baf2sql_get_sqlite_cache_filename(filename)
         storage = c_baf2sql_array_open_storage_calibrated(filename)
@@ -270,6 +271,7 @@ class BAF2SQL(val filename: String) {
     external fun c_baf2sql_set_num_threads(threads: Int)
     external fun c_baf2sql_array_get_num_elements(handle: BinaryStorage, id: Long): NumElements
     external fun c_baf2sql_read_double_array(handle: BinaryStorage, id: Long): BAFDoubleArray?
+
     fun addLevelFilter(d: Double) {
         levelFilter = d
     }
