@@ -17,8 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package net.nprod.baf2mzml
 
-import net.nprod.baf2mzml.BAF2SQL
-import net.nprod.baf2mzml.saveAsMzMl
 import java.io.File
 
 fun main(args: Array<String>) {
