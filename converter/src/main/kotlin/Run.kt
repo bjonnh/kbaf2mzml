@@ -1,11 +1,35 @@
+/*
+An ultrafast Bruker BAF to MzML converter
+Copyright (C) 2020 Jonathan Bisson
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 package net.nprod.baf2mzml
 
 import net.nprod.baf2mzml.schema.LineData
 import net.nprod.baf2mzml.schema.Spectrum
 
-
+/**
+ * DSL class to construct a run.
+ */
 class RunsBuilder {
-    val content = mutableListOf<Run>()
+    private val content = mutableListOf<Run>()
+
+    val list: List<Run>
+        get() = content
+
     private var counter = 0
     operator fun Run.unaryPlus(): Run {
         val run = if (this.id == null) {
@@ -20,12 +44,13 @@ class RunsBuilder {
     fun newRun(defaultSourceFile: String, defaultInstrumentConfiguration: String, f: Run.() -> Unit) {
         val run =
             Run(defaultInstrumentConfiguration = defaultInstrumentConfiguration, defaultSourceFile = defaultSourceFile)
-        val newRun = +run
-        newRun.apply(f)
+        (+run).apply(f)
     }
 }
 
-
+/**
+ * Describe a run
+ */
 data class Run(
     val id: String? = null,
     val defaultInstrumentConfiguration: String,
@@ -92,8 +117,8 @@ data class Run(
 
             val basepeakIndex = spectrum.profileData?.intensity?.withIndex()?.maxByOrNull { it.value }?.index
             if (basepeakIndex != null) {
-                mzMLFile.write(Param.basePeak(spectrum.profileData!!.mz[basepeakIndex]))
-                mzMLFile.write(Param.basePeakIntensity(spectrum.profileData!!.intensity[basepeakIndex]))
+                mzMLFile.write(Param.basePeak(spectrum.profileData.mz[basepeakIndex]))
+                mzMLFile.write(Param.basePeakIntensity(spectrum.profileData.intensity[basepeakIndex]))
             }
 
             mzMLFile.write(Param.tic(spectrum.sumIntensity))
@@ -158,8 +183,18 @@ data class Run(
     private fun binaryData(mzMLFile: MzMLFile, lineData: LineData?) {
         if (lineData == null) throw RuntimeException("Sorry only line data for now")
         mzMLFile.writeln("""<binaryDataArrayList count="2">""")
-        binaryDataArray(mzMLFile, lineData.mz, mz = true)
-        binaryDataArray(mzMLFile, lineData.intensity.map { it.toFloat() }.toFloatArray(), mz = false)
+        binaryDataArrayWriter(
+            mzMLFile,
+            base64ArrayEncoder(lineData.mz),
+            mz = true,
+            double = true
+        )
+        binaryDataArrayWriter(
+            mzMLFile,
+            base64ArrayEncoder(lineData.intensity.map { it.toFloat() }.toFloatArray()),
+            mz = false,
+            double = false
+        )
         mzMLFile.writeln("</binaryDataArrayList>")
     }
 
@@ -183,12 +218,6 @@ data class Run(
             writeln("</binaryDataArray>")
         }
     }
-
-    fun binaryDataArray(mzMLFile: MzMLFile, data: DoubleArray, mz: Boolean) =
-        binaryDataArrayWriter(mzMLFile, base64ArrayEncoder(data), mz, true)
-
-    fun binaryDataArray(mzMLFile: MzMLFile, data: FloatArray, mz: Boolean) =
-        binaryDataArrayWriter(mzMLFile, base64ArrayEncoder(data), mz, false)
 
 /*
 fun addSoftwareList() { // TODO!!!

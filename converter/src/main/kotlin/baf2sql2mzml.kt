@@ -105,8 +105,8 @@ class MzMLFile(val stream: OutputStream) {
     fun samples(f: SamplesBuilder.() -> Unit) {
         val samples = SamplesBuilder()
         samples.apply(f)
-        writeln("""<sampleList count="${samples.content.size}">""")
-        samples.content.forEach { sample ->
+        writeln("""<sampleList count="${samples.list.size}">""")
+        samples.list.forEach { sample ->
             writeln(sample.toXML())
         }
         writeln("""</sampleList>""")
@@ -115,7 +115,7 @@ class MzMLFile(val stream: OutputStream) {
     fun runs(f: RunsBuilder.() -> Unit) {
         val runs = RunsBuilder()
         runs.apply(f)
-        runs.content.forEach {
+        runs.list.forEach {
             it.writeToFile(this)
         }
     }
