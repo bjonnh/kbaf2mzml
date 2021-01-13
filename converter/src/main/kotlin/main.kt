@@ -17,17 +17,38 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package net.nprod.baf2mzml
 
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.arguments.unique
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.types.path
 import java.io.File
+import java.nio.file.Path
 
-fun main(args: Array<String>) {
-    args.map {
-        val analysis = File(it, "analysis.baf")
-        println("Converting ${analysis.absolutePath}")
-        val converter = BAF2SQL(analysis.absolutePath)
-        converter.addLevelFilter(1000.0)
-        val parent = analysis.parent
-        converter.saveAsMzMl(parent.substring(0, parent.length - 2) + ".mzML")
-        println(converter.lasterror)
-        converter.close()
+class Converter : CliktCommand() {
+    val output: String by option(help = "Output directory").required()
+    val source: Set<Path> by argument().path(mustExist = true).multiple().unique()
+
+    override fun run() {
+        val output = File(output).also { it.mkdirs() }
+        source.map {
+            val analysis = File(it.toFile(), "analysis.baf")
+            println("Converting ${analysis.absolutePath}")
+            val converter = BAF2SQL(analysis.absolutePath)
+            converter.addLevelFilter(100.0)
+            val parent = analysis.parent
+            converter.saveAsMzMl(
+                File(
+                    output,
+                    it.toFile().name.substring(0, it.toFile().name.length - 2) + ".mzML"
+                ).absolutePath
+            )
+            println(converter.lasterror)
+            converter.close()
+        }
     }
 }
+
+fun main(args: Array<String>) = Converter().main(args)
