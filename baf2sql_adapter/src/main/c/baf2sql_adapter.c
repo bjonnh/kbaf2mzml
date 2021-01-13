@@ -20,19 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "../public/baf2sql_c.h"
 
 static const char *JNIT_CLASS = "net/nprod/baf2mzml/BAF2SQL";
-
-int baf2sql_get_sqlite_cache_filename_v2(const char *, unsigned int, const char*, int);
-uint64_t baf2sql_array_open_storage(int, const char *);
-void baf2sql_array_close_storage(u_int64_t);
-int baf2sql_get_last_error_string(char *, int);
-void baf2sql_set_num_threads(u_int32_t);
-int baf2sql_array_get_num_elements(u_int64_t, u_int64_t, u_int64_t *);
-int baf2sql_array_read_double(u_int64_t, u_int64_t, double []);
-int baf2sql_array_read_float(u_int64_t, u_int64_t, float []);
-int baf2sql_array_read_uint32(u_int64_t, u_int64_t, u_int32_t []);
-
 
 static jstring c_baf2sql_get_sqlite_cache_filename(JNIEnv *env, jobject obj, jstring bafFile) {
     const char *bafFileString;

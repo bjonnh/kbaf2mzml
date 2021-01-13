@@ -53,8 +53,14 @@ class BAF2SQL(val filename: String) {
     init {
         val homeFile = File(System.getenv("APP_HOME") ?: System.getProperty("user.dir"))
         val libFile = File(homeFile, "lib")
-        System.load(File(libFile, "libbaf2sql_c.so").absolutePath)
-        System.load(File(libFile, "libbaf2sql_adapter.so").absolutePath)
+        try {
+            System.load(File(libFile, "libbaf2sql_c.so").absolutePath)
+            System.load(File(libFile, "libbaf2sql_adapter.so").absolutePath)
+        } catch (e: UnsatisfiedLinkError) {
+            println("Trying the windows lib")
+            System.load(File(libFile, "baf2sql_c.dll").absolutePath)
+            System.load(File(libFile, "baf2sql_adapter.dll").absolutePath)
+        }
         c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
         sqliteDb = c_baf2sql_get_sqlite_cache_filename(filename)
         storage = c_baf2sql_array_open_storage_calibrated(filename)

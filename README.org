@@ -10,3 +10,9 @@ There is a lot left to do for it to be really usable.
 The purpose is NOT to make it a feature complete converter for every instrument, this is an
 internal tool that we are sharing the code if someone find any use to it.
 
+** Adapter for windows
+
+You can cross-build for windows on linux. You will need to install mingw64 and put the JDK in stuff/ then update
+build_adapter.h
+
+We are giving you an already made DLL to make process easier as it can be painful.

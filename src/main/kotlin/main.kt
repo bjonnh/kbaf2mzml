@@ -21,19 +21,20 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.unique
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.path
 import java.io.File
 import java.nio.file.Path
 
 class Converter : CliktCommand() {
-    val output: String by option(help = "Output directory").required()
+    val output: String? by option(help = "Output directory")
+        .help("output directory, if not given, will build in the directory just up the requested converted file")
     val source: Set<Path> by argument().path(mustExist = true).multiple().unique()
 
     override fun run() {
-        val output = File(output).also { it.mkdirs() }
         source.map {
+            val outputDir = output?.let { File(output).also { it.mkdirs() } } ?: it.toFile().parentFile
             val analysis = File(it.toFile(), "analysis.baf")
             println("Converting ${analysis.absolutePath}")
             val converter = BAF2SQL(analysis.absolutePath)
@@ -41,7 +42,7 @@ class Converter : CliktCommand() {
             val parent = analysis.parent
             converter.saveAsMzMl(
                 File(
-                    output,
+                    outputDir,
                     it.toFile().name.substring(0, it.toFile().name.length - 2) + ".mzML"
                 ).absolutePath
             )
