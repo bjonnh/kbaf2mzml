@@ -1,4 +1,4 @@
-/*
+package net.nprod.baf2mzml/*
 An ultrafast Bruker BAF to MzML converter
 Copyright (C) 2020 Jonathan Bisson
 

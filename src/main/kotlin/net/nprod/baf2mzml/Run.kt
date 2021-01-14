@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package net.nprod.baf2mzml
 
+import net.nprod.baf2mzml.helpers.base64ArrayEncoder
 import net.nprod.baf2mzml.schema.LineData
 import net.nprod.baf2mzml.schema.Spectrum
 

@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package net.nprod.baf2mzml
 
-import Sample
 import net.nprod.baf2mzml.schema.Spectrum
 import java.io.File
 import java.io.FileOutputStream
