@@ -58,26 +58,38 @@ distributions {
 
 jlink {
     launcher {
-        name = "hello"
+        name = "run"
     }
-    /*addExtraDependencies("com.github.ajalt.clikt")
+    //addExtraDependencies("com.github.ajalt.clikt")
     imageZip.set(file("$buildDir/kbaf2mzml-$version.zip"))
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
-    //modules.set(listOf("java.sql"))
-    targetPlatform("windows-x64", "stuff/jdk-15.0.1+9")
-    targetPlatform("linux-x64", "/usr/lib/jvm/default")*/
+    targetPlatform("windows-x64") {
+        setJdkHome("stuff/jdk-15.0.1+9")
+        extraModulePaths.add("stuff/javafx-jmods-15.0.1")
+    }
+    targetPlatform("linux-x64", "/usr/lib/jvm/default")
+    mergedModule {
+        forceMerge("kotlin", "sqlite-jdbc")
+        requires("java.sql")
+        provides("java.sql.Driver").with("org.sqlite.JDBC")
+        uses("org.sqlite.JDBC")
+    }
 }
 
 tasks {
     "jlink" {
-        doLast {
-            copy {
-                from("lib/*.dll")
-                into("$buildDir/image/lib")
-            }
-            copy {
-                from("lib/*.so")
-                into("$buildDir/image/lib")
+        if (this is org.beryx.jlink.JlinkTask) {
+            doLast {
+                file("$buildDir/image/run-windows-x64/lib").mkdirs()
+                file("$buildDir/image/run-linux-x64/lib").mkdirs()
+                copy {
+                    from("$projectDir/lib/baf2sql_adapter.dll", "$projectDir/lib/baf2sql_c.dll")
+                    into("$buildDir/image/run-windows-x64/lib")
+                }
+                copy {
+                    from("$projectDir/lib/libbaf2sql_adapter.so", "$projectDir/lib/libbaf2sql_c.so")
+                    into("$buildDir/image/run-linux-x64/lib")
+                }
             }
         }
     }

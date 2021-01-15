@@ -22,7 +22,7 @@ import org.apache.commons.text.StringEscapeUtils
 import java.io.File
 import java.io.OutputStream
 
-fun BAF2SQL.saveAsMzMl(filename: String) {
+fun BAF2SQLFile.saveAsMzMl(filename: String) {
     val writer = MzMLWriter(File(filename), "Test", this)
     writer.execute()
 }

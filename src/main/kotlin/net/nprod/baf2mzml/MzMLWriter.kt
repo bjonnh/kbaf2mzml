@@ -22,7 +22,7 @@ import net.nprod.baf2mzml.schema.Spectrum
 import java.io.File
 import java.io.FileOutputStream
 
-class MzMLWriter(file: File, val sampleName: String, val baf2SQL: BAF2SQL) {
+class MzMLWriter(file: File, val sampleName: String, val baf2SQL: BAF2SQLFile) {
     val outputStream: FileOutputStream = FileOutputStream(file)
     val offsetStore = mutableListOf<Offset>()
     var position = 0

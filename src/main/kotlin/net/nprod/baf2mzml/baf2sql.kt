@@ -34,11 +34,49 @@ class NumElements(var ret: Int, var value: Long) {
     }
 }
 
+object BAF2SQL {
+    init {
+        listOf(
+            File(System.getProperty("sun.boot.library.path")).parent,
+            System.getProperty("user.dir"),
+            System.getenv("APP_HOME")
+        ).map { homeFile ->
+            val libFile = File(homeFile, "lib")
+            try {
+                if (System.getProperty("os.name") == "Linux") {
+
+                    System.load(File(libFile, "libbaf2sql_c.so").absolutePath)
+                    System.load(File(libFile, "libbaf2sql_adapter.so").absolutePath)
+                } else {
+                    System.load(File(libFile, "baf2sql_c.dll").absolutePath)
+                    System.load(File(libFile, "baf2sql_adapter.dll").absolutePath)
+                }
+
+            } catch (e: UnsatisfiedLinkError) {
+                println("Couldn't find library in $libFile")
+            }
+        }
+        c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
+    }
+
+    fun initialize() {
+        println("Hello")
+    }
+
+    external fun c_baf2sql_get_sqlite_cache_filename(fileName: String): String
+    external fun c_baf2sql_array_open_storage_calibrated(fileName: String): BinaryStorage
+    external fun c_baf2sql_array_close_storage(storage: BinaryStorage): Int
+    external fun c_baf2sql_get_last_error_string(): String
+    external fun c_baf2sql_set_num_threads(threads: Int)
+    external fun c_baf2sql_array_get_num_elements(handle: BinaryStorage, id: Long): NumElements
+    external fun c_baf2sql_read_double_array(handle: BinaryStorage, id: Long): BAFDoubleArray?
+}
+
 /**
  * Handle BAF files
  * this assumes you have enough memory, we are not going to stream from disk
  */
-class BAF2SQL(val filename: String) {
+class BAF2SQLFile(val filename: String) {
     private var levelFilter: Double? = null
     private var sqliteDb: String? = null
     private var storage: BinaryStorage? = null
@@ -48,22 +86,12 @@ class BAF2SQL(val filename: String) {
      * Show the last error from the C library
      */
     val lasterror: String
-        get() = c_baf2sql_get_last_error_string()
+        get() = BAF2SQL.c_baf2sql_get_last_error_string()
 
     init {
-        val homeFile = File(System.getenv("APP_HOME") ?: System.getProperty("user.dir"))
-        val libFile = File(homeFile, "lib")
-        try {
-            System.load(File(libFile, "libbaf2sql_c.so").absolutePath)
-            System.load(File(libFile, "libbaf2sql_adapter.so").absolutePath)
-        } catch (e: UnsatisfiedLinkError) {
-            println("Trying the windows lib")
-            System.load(File(libFile, "baf2sql_c.dll").absolutePath)
-            System.load(File(libFile, "baf2sql_adapter.dll").absolutePath)
-        }
-        c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
-        sqliteDb = c_baf2sql_get_sqlite_cache_filename(filename)
-        storage = c_baf2sql_array_open_storage_calibrated(filename)
+
+        sqliteDb = BAF2SQL.c_baf2sql_get_sqlite_cache_filename(filename)
+        storage = BAF2SQL.c_baf2sql_array_open_storage_calibrated(filename)
         connection = DriverManager.getConnection("jdbc:sqlite:$sqliteDb")
     }
 
@@ -72,7 +100,7 @@ class BAF2SQL(val filename: String) {
      */
 
     fun close() {
-        storage?.let { c_baf2sql_array_close_storage(it) }
+        storage?.let { BAF2SQL.c_baf2sql_array_close_storage(it) }
         connection?.close()
     }
 
@@ -230,9 +258,9 @@ class BAF2SQL(val filename: String) {
             storage ?: throw RuntimeException("Storage is not accessible, something is wrong, did you open the file?")
 
         return ProfileData(
-            c_baf2sql_read_double_array(localStorage, mzId)?.array
+            BAF2SQL.c_baf2sql_read_double_array(localStorage, mzId)?.array
                 ?: throw RuntimeException("Cannot read the MZ array. File is probably broken."),
-            c_baf2sql_read_double_array(localStorage, intensityId)?.array
+            BAF2SQL.c_baf2sql_read_double_array(localStorage, intensityId)?.array
                 ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken."),
         )
     }
@@ -249,9 +277,9 @@ class BAF2SQL(val filename: String) {
         if (mzId == null || intensityId == null || snrId == null) return null
         val localStorage =
             storage ?: throw RuntimeException("Storage is not accessible, something is wrong, did you open the file?")
-        val mzArray = c_baf2sql_read_double_array(localStorage, mzId)?.array
+        val mzArray = BAF2SQL.c_baf2sql_read_double_array(localStorage, mzId)?.array
             ?: throw RuntimeException("Cannot read the MZ array. File is probably broken.")
-        val intensityArray = c_baf2sql_read_double_array(localStorage, intensityId)?.array
+        val intensityArray = BAF2SQL.c_baf2sql_read_double_array(localStorage, intensityId)?.array
             ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken.")
 
         val level = levelFilter
@@ -271,14 +299,6 @@ class BAF2SQL(val filename: String) {
             intensityArrayProcessed,
         )
     }
-
-    external fun c_baf2sql_get_sqlite_cache_filename(fileName: String): String
-    external fun c_baf2sql_array_open_storage_calibrated(fileName: String): BinaryStorage
-    external fun c_baf2sql_array_close_storage(storage: BinaryStorage): Int
-    external fun c_baf2sql_get_last_error_string(): String
-    external fun c_baf2sql_set_num_threads(threads: Int)
-    external fun c_baf2sql_array_get_num_elements(handle: BinaryStorage, id: Long): NumElements
-    external fun c_baf2sql_read_double_array(handle: BinaryStorage, id: Long): BAFDoubleArray?
 
     fun addLevelFilter(d: Double) {
         levelFilter = d
