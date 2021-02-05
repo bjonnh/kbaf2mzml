@@ -25,10 +25,12 @@ import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.path*/
 import javafx.application.Application
+import javafx.application.Platform
 import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
+import javafx.concurrent.Task
 import javafx.event.EventHandler
 import javafx.geometry.Pos
 import javafx.scene.Scene
@@ -45,6 +47,7 @@ import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import java.io.File
+import kotlin.concurrent.thread
 
 /*
 class Converter : CliktCommand() {
@@ -90,33 +93,44 @@ class JavaFX : Application() {
         model.processing.set(true)
         val inputs = model.inputFiles.map { it }
 
-        inputs.map {
-            val outputDir = if (!model.outputDirectory.value.isNullOrEmpty()) {
-                File(model.outputDirectory.value).also { it.mkdirs() }
-            } else File(it).parentFile
-            val analysis = File(File(it), "analysis.baf")
-            println("Converting ${analysis.absolutePath}")
-            val converter = BAF2SQLFile(analysis.absolutePath)
-            converter.addLevelFilter(100.0)
+        val task = object : Task<Unit>() {
+            override fun call() {
+                inputs.map {
+                    val outputDir = if (!model.outputDirectory.value.isNullOrEmpty()) {
+                        File(model.outputDirectory.value).also { it.mkdirs() }
+                    } else File(it).parentFile
+                    val analysis = File(File(it), "analysis.baf")
+                    println("Converting ${analysis.absolutePath}")
+                    val converter = BAF2SQLFile(analysis.absolutePath)
+                    converter.addLevelFilter(100.0)
 
-            converter.saveAsMzMl(
-                File(
-                    outputDir,
-                    File(it).name.substring(0, File(it).name.length - 2) + ".mzML"
-                ).absolutePath
-            )
-            println(converter.lasterror)
-            converter.close()
-
-            model.inputFiles.removeAll(it)
+                    converter.saveAsMzMl(
+                        File(
+                            outputDir,
+                            File(it).name.substring(0, File(it).name.length - 2) + ".mzML"
+                        ).absolutePath
+                    )
+                    println(converter.lasterror)
+                    Platform.runLater {
+                        model.inputFiles.removeAll(it)
+                    }
+                    converter.close()
+                }
+                Platform.runLater {
+                    model.processing.set(false)
+                }
+            }
         }
-        model.processing.set(false)
+        thread {
+            task.run()
+        }
+        //processFiles.start(inputs, model.outputDirectory.value)
     }
 
 
     override fun start(stage: Stage) {
 
-        net.nprod.baf2mzml.BAF2SQL.initialize()
+        BAF2SQL.initialize()
 
         val title = Text("BAF2MzML").apply {
             this.fill = Color.web("#FF0090")

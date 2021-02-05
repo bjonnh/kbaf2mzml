@@ -19,17 +19,26 @@ application {
     mainClass.set("net.nprod.baf2mzml.JavaFX")
 }
 
+sourceSets.main {
+    java.srcDirs("src/main/kotlin")
+}
+
 java {
-    modularity.inferModulePath.set(true)
+   modularity.inferModulePath.set(true)
 }
 
 dependencies {
+    val coroutinesVersion = "1.4.2"
+
     implementation(kotlin("stdlib"))
     implementation("org.xerial:sqlite-jdbc:3.32.3.2")
     implementation("org.apache.commons:commons-text:1.9")
     implementation("com.github.ajalt.clikt:clikt:3.1.0") {
         exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
     }
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$coroutinesVersion")
 
     val platform = "linux"
     implementation("org.openjfx:javafx-base:15.0.1:${platform}")
@@ -68,8 +77,10 @@ jlink {
         extraModulePaths.add("stuff/javafx-jmods-15.0.1")
     }
     targetPlatform("linux-x64", "/usr/lib/jvm/default")
+    addExtraDependencies("kotlinx.coroutines.core.jvm")
     mergedModule {
-        forceMerge("kotlin", "sqlite-jdbc")
+
+        forceMerge("kotlin", "sqlite-jdbc", "kotlinx.coroutines.core.jvm", "kotlinx.coroutines.core")
         requires("java.sql")
         provides("java.sql.Driver").with("org.sqlite.JDBC")
         uses("org.sqlite.JDBC")
