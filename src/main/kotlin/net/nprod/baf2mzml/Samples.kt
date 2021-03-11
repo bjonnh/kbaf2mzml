@@ -62,5 +62,5 @@ data class Sample(
      * Convert this sample to a XML string.
      */
     fun toXML(): String =
-        """<sample id="${XMLsafe(id)}" name="${XMLsafe(name)}"></sample>"""
+        """<sample id="${xmlSafeString(id)}" name="${xmlSafeString(name)}"></sample>"""
 }

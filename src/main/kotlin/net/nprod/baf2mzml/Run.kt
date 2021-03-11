@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package net.nprod.baf2mzml
 
+import net.nprod.baf2mzml.exceptions.FeatureMissingException
 import net.nprod.baf2mzml.helpers.base64ArrayEncoder
 import net.nprod.baf2mzml.schema.LineData
 import net.nprod.baf2mzml.schema.Spectrum
@@ -65,12 +66,12 @@ data class Run(
      */
     fun writeToFile(mzMLFile: MzMLFile) {
         mzMLFile.writeln(
-            """<run id="${XMLsafe(id)}" defaultInstrumentConfigurationRef="${
-            XMLsafe(
+            """<run id="${xmlSafeString(id)}" defaultInstrumentConfigurationRef="${
+            xmlSafeString(
                 defaultInstrumentConfiguration
             )
             }" defaultSourceFileRef="${
-            XMLsafe(
+            xmlSafeString(
                 defaultSourceFile
             )
             }">"""
@@ -178,7 +179,7 @@ data class Run(
     }
 
     private fun binaryData(mzMLFile: MzMLFile, lineData: LineData?) {
-        if (lineData == null) throw RuntimeException("Sorry only line data for now")
+        if (lineData == null) throw FeatureMissingException("Sorry only line data for now")
         mzMLFile.writeln("""<binaryDataArrayList count="2">""")
         binaryDataArrayWriter(
             mzMLFile,

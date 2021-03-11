@@ -38,14 +38,14 @@ data class Param(
 ) {
     fun toXML(): String {
         var out =
-            """<cvParam cvRef="${XMLsafe(cvRef)}" accession="${XMLsafe(accession)}" name="${XMLsafe(name)}" value="${
-            XMLsafe(
+            """<cvParam cvRef="${xmlSafeString(cvRef)}" accession="${xmlSafeString(accession)}" name="${xmlSafeString(name)}" value="${
+            xmlSafeString(
                 value
             )
             }""""
-        unitCvRef?.let { out += """ unitCvRef="${XMLsafe(it)}" """ }
-        unitAccession?.let { out += """ unitAccession="${XMLsafe(it)}" """ }
-        unitName?.let { out += """ unitName="${XMLsafe(it)}" """ }
+        unitCvRef?.let { out += """ unitCvRef="${xmlSafeString(it)}" """ }
+        unitAccession?.let { out += """ unitAccession="${xmlSafeString(it)}" """ }
+        unitName?.let { out += """ unitName="${xmlSafeString(it)}" """ }
         out += "/>"
         return out
     }

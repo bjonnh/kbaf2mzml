@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package net.nprod.baf2mzml
 
+import net.nprod.baf2mzml.exceptions.FileFormatException
 import net.nprod.baf2mzml.schema.*
 import java.io.File
 import java.sql.Connection
@@ -34,6 +35,7 @@ class NumElements(var ret: Int, var value: Long) {
     }
 }
 
+@Suppress("FunctionNaming")
 object BAF2SQL {
     init {
         listOf(
@@ -56,10 +58,6 @@ object BAF2SQL {
             }
         }
         c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
-    }
-
-    fun initialize() {
-        println("Hello")
     }
 
     external fun c_baf2sql_get_sqlite_cache_filename(fileName: String): String
@@ -107,7 +105,7 @@ class BAF2SQLFile(val filename: String) {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
 
         val statement = connection?.createStatement()
-            ?: throw RuntimeException("Connection is not open, something failed with the database and this was not expected.")
+            ?: throw connectionError()
 
         statement.queryTimeout = 30
 
@@ -116,7 +114,7 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Variable, PermanentName, Type, DisplayGroupName," +
-                    " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
+                        " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
             )
 
         while (rs.next()) {
@@ -134,10 +132,15 @@ class BAF2SQLFile(val filename: String) {
         return supportedVariables
     }
 
+    private fun connectionError() = IllegalStateException(
+        "Connection is not open, something failed with the database " +
+                "and this was not expected, this may be due to a faulty file."
+    )
+
     fun spectraAcquisitionData(): Map<Int, SpectrumAcquisitionData> {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
         val statement = connection?.createStatement()
-            ?: throw RuntimeException("Connection is not open, something failed with the database and this was not expected.")
+            ?: throw connectionError()
 
         statement.queryTimeout = 30
 
@@ -172,7 +175,7 @@ class BAF2SQLFile(val filename: String) {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
 
         val statement = connection?.createStatement()
-            ?: throw RuntimeException("Connection is not open, something failed with the database and this was not expected.")
+            ?: throw connectionError()
 
         statement.queryTimeout = 30
 
@@ -199,7 +202,7 @@ class BAF2SQLFile(val filename: String) {
     fun spectraDataAct(id: Int? = null, lineOnly: Boolean = true, func: (Spectrum) -> Unit) {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
         val statement = connection?.createStatement()
-            ?: throw RuntimeException("Connection is not open, something failed with the database and this was not expected.")
+            ?: throw connectionError()
 
         statement.queryTimeout = 30
 
@@ -209,10 +212,10 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Id, Rt, Segment, AcquisitionKey, Parent, MzAcqRangeLower, MzAcqRangeUpper, " +
-                    "SumIntensity, MaxIntensity, TransformatorId," +
-                    "ProfileMzId, ProfileIntensityId, " +
-                    "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
-                    "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
+                        "SumIntensity, MaxIntensity, TransformatorId," +
+                        "ProfileMzId, ProfileIntensityId, " +
+                        "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
+                        "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
             )
         while (rs.next()) {
             val id = rs.getInt(1)
@@ -224,9 +227,9 @@ class BAF2SQLFile(val filename: String) {
                     rt = rs.getDouble(2),
                     segment = rs.getInt(3),
                     acquisitionKey = acquisitionKeys[rs.getInt(4)]
-                        ?: throw RuntimeException("Invalid acquisition key for spectrum $id: ${rs.getInt(4)}"),
+                        ?: throw IllegalArgumentException("Invalid acquisition key for spectrum $id: ${rs.getInt(4)}"),
                     acquisitionData = spectrumAcquisitionData[id]
-                        ?: throw RuntimeException("No acquisition data for spectrum $id"),
+                        ?: throw IllegalArgumentException("No acquisition data for spectrum $id"),
                     parent = parentId,
                     mzAcqRangeLower = rs.getInt(6),
                     mzAcqRangeUpper = rs.getInt(7),
@@ -253,13 +256,14 @@ class BAF2SQLFile(val filename: String) {
     private fun generateProfileData(mzId: Long?, intensityId: Long?): ProfileData? {
         if (mzId == null || intensityId == null) return null
         val localStorage =
-            storage ?: throw RuntimeException("Storage is not accessible, something is wrong, did you open the file?")
+            storage
+                ?: throw FileFormatException("Storage is not accessible, something is wrong, did you open the file?")
 
         return ProfileData(
             BAF2SQL.c_baf2sql_read_double_array(localStorage, mzId)?.array
-                ?: throw RuntimeException("Cannot read the MZ array. File is probably broken."),
+                ?: throw FileFormatException("Cannot read the MZ array. File is probably broken."),
             BAF2SQL.c_baf2sql_read_double_array(localStorage, intensityId)?.array
-                ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken."),
+                ?: throw FileFormatException("Cannot read the Intensity Array. File is probably broken."),
         )
     }
 
@@ -275,11 +279,12 @@ class BAF2SQLFile(val filename: String) {
     ): LineData? {
         if (mzId == null || intensityId == null || snrId == null) return null
         val localStorage =
-            storage ?: throw RuntimeException("Storage is not accessible, something is wrong, did you open the file?")
+            storage
+                ?: throw FileFormatException("Storage is not accessible, something is wrong, did you open the file?")
         val mzArray = BAF2SQL.c_baf2sql_read_double_array(localStorage, mzId)?.array
-            ?: throw RuntimeException("Cannot read the MZ array. File is probably broken.")
+            ?: throw FileFormatException("Cannot read the MZ array. File is probably broken.")
         val intensityArray = BAF2SQL.c_baf2sql_read_double_array(localStorage, intensityId)?.array
-            ?: throw RuntimeException("Cannot read the Intensity Array. File is probably broken.")
+            ?: throw FileFormatException("Cannot read the Intensity Array. File is probably broken.")
 
         val level = levelFilter
         val mzArrayProcessed: DoubleArray

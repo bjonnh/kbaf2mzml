@@ -129,9 +129,6 @@ class JavaFX : Application() {
     }
 
     override fun start(stage: Stage) {
-
-        BAF2SQL.initialize()
-
         val title = Text("BAF2MzML").apply {
             this.fill = Color.web("#FF0090")
             this.font = Font(32.0)

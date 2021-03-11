@@ -27,8 +27,8 @@ fun BAF2SQLFile.saveAsMzMl(filename: String) {
     writer.execute()
 }
 
-fun XMLsafe(s: String?): String {
-    if (s == null) throw RuntimeException("Impossible to make a null string safe.")
+fun xmlSafeString(s: String?): String {
+    if (s == null) throw InternalError("Impossible to make a null string safe.")
     return StringEscapeUtils.ESCAPE_XML11.translate(s)
 }
 
@@ -155,7 +155,7 @@ class ReferenceableParamGroupList {
         val paramBuilder = ParamBuilder()
         paramBuilder.apply(f)
 
-        referenceableParamGroups[XMLsafe(groupName)] = paramBuilder.params
+        referenceableParamGroups[xmlSafeString(groupName)] = paramBuilder.params
     }
 }
 
