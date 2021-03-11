@@ -12,6 +12,7 @@ pluginManagement {
     }
 
     plugins {
+        val changelogVersion: String by settings
         val versionsPluginVersion: String by settings
         val kotlinVersion: String by settings
         val jlinkVersion: String by settings
@@ -21,6 +22,7 @@ pluginManagement {
         val openjfxPluginVersion: String by settings
 
         kotlin("jvm") version kotlinVersion
+        id("org.jetbrains.changelog") version changelogVersion
         id("com.github.ben-manes.versions") version versionsPluginVersion
         id("org.beryx.jlink") version jlinkVersion
 

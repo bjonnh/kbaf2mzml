@@ -8,6 +8,7 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jmailen.kotlinter")
+    id("org.jetbrains.changelog")
     //id("org.openjfx.javafxplugin")  // This doesn't work…
 }
 
