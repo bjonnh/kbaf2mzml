@@ -73,10 +73,13 @@ jlink {
     imageZip.set(file("$buildDir/kbaf2mzml-$version.zip"))
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
     targetPlatform("windows-x64") {
-        setJdkHome("stuff/jdk-15.0.1+9")
+        setJdkHome("stuff/jdk-15.0.2+7")
         extraModulePaths.add("stuff/javafx-jmods-15.0.1")
     }
-    targetPlatform("linux-x64", "/usr/lib/jvm/default")
+    targetPlatform("linux-x64") {
+	setJdkHome("stuff/jdk-15.0.2+7")
+    	extraModulePaths.add("stuff/javafx-jmods-15.0.1")
+    }
     addExtraDependencies("kotlinx.coroutines.core.jvm")
     mergedModule {
 
