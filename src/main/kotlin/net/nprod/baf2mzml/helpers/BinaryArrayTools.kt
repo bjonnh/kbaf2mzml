@@ -25,6 +25,7 @@ import java.util.*
 /**
  * Convert a DoubleArray to a Base64 encoded byte array
  */
+@Suppress("MagicNumber")
 fun base64ArrayEncoder(data: DoubleArray): ByteArray {
     val encodedData: ByteArray
     val buffer = ByteBuffer.allocate(data.size * 8)
@@ -39,6 +40,7 @@ fun base64ArrayEncoder(data: DoubleArray): ByteArray {
 /**
  * Convert a FloatArray to a Base64 encoded byte array
  */
+@Suppress("MagicNumber")
 fun base64ArrayEncoder(data: FloatArray): ByteArray {
     val encodedData: ByteArray
     val buffer = ByteBuffer.allocate(data.size * 4)

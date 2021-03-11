@@ -66,13 +66,13 @@ data class Run(
     fun writeToFile(mzMLFile: MzMLFile) {
         mzMLFile.writeln(
             """<run id="${XMLsafe(id)}" defaultInstrumentConfigurationRef="${
-                XMLsafe(
-                    defaultInstrumentConfiguration
-                )
+            XMLsafe(
+                defaultInstrumentConfiguration
+            )
             }" defaultSourceFileRef="${
-                XMLsafe(
-                    defaultSourceFile
-                )
+            XMLsafe(
+                defaultSourceFile
+            )
             }">"""
         )
 
@@ -101,20 +101,16 @@ data class Run(
                 addOffset(id)
                 writeln("""<spectrum index="$index" id="$id" defaultArrayLength="${spectrum.lineData?.mz?.size}">""")
 
-
                 when (spectrum.acquisitionKey.msLevel) {
                     0 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS1SpectrumParams"/>""")
                     1 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS2SpectrumParams"/>""")
                 }
-
-
 
                 write(Param.msLevel(spectrum.acquisitionKey.msLevel + 1))
                 write(Param.centroid())
                 write(Param.lowMass(spectrum.profileData?.mz?.minOrNull() ?: 0.0))
                 write(Param.highMass(spectrum.profileData?.mz?.maxOrNull() ?: 0.0))
             }
-
 
             val basepeakIndex = spectrum.profileData?.intensity?.withIndex()?.maxByOrNull { it.value }?.index
             if (basepeakIndex != null) {
@@ -171,7 +167,7 @@ data class Run(
                     writeln("""      <cvParam cvRef="MS" accession="MS:1000133" name="collision-induced dissociation" value=""/>""")
                     writeln(
                         """      <cvParam cvRef="MS" accession="MS:1000045" name="collision energy" value="${spectrum.acquisitionData.collisionEnergyAct ?: 0.0}" unitCvRef="UO"""" +
-                                """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
+                            """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
                     )
                     writeln("""    </activation>""")
                     writeln("""  </precursor>""")

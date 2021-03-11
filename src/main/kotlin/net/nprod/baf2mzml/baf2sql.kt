@@ -51,7 +51,6 @@ object BAF2SQL {
                     System.load(File(libFile, "baf2sql_c.dll").absolutePath)
                     System.load(File(libFile, "baf2sql_adapter.dll").absolutePath)
                 }
-
             } catch (e: UnsatisfiedLinkError) {
                 println("Couldn't find library in $libFile")
             }
@@ -117,7 +116,7 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Variable, PermanentName, Type, DisplayGroupName," +
-                        " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
+                    " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
             )
 
         while (rs.next()) {
@@ -210,10 +209,10 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Id, Rt, Segment, AcquisitionKey, Parent, MzAcqRangeLower, MzAcqRangeUpper, " +
-                        "SumIntensity, MaxIntensity, TransformatorId," +
-                        "ProfileMzId, ProfileIntensityId, " +
-                        "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
-                        "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
+                    "SumIntensity, MaxIntensity, TransformatorId," +
+                    "ProfileMzId, ProfileIntensityId, " +
+                    "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
+                    "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
             )
         while (rs.next()) {
             val id = rs.getInt(1)
@@ -234,7 +233,7 @@ class BAF2SQLFile(val filename: String) {
                     sumIntensity = rs.getDouble(8),
                     maxIntensity = rs.getDouble(9),
                     transformatorId = rs.getInt(10), // We don't handle that yet
-                    profileData = if (!lineOnly) generateProfileData(  // We get the profile data
+                    profileData = if (!lineOnly) generateProfileData( // We get the profile data
                         rs.getLong(11),
                         rs.getLong(12)
                     ) else null,
@@ -249,7 +248,6 @@ class BAF2SQLFile(val filename: String) {
                 )
             )
         }
-
     }
 
     private fun generateProfileData(mzId: Long?, intensityId: Long?): ProfileData? {
@@ -266,6 +264,7 @@ class BAF2SQLFile(val filename: String) {
     }
 
     // for now we only handle mz, intensity and snr
+    @Suppress("LongParameterList")
     private fun generateLineData(
         indexId: Long?,
         mzId: Long?,

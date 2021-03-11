@@ -42,6 +42,7 @@ class OffsetableOutput(
     val offsets: List<Offset>
 )
 
+@Suppress("TooManyFunctions")
 class MzMLFile(val stream: OutputStream) {
     var position = 0
     val offsetStore = mutableListOf<Offset>()
@@ -64,16 +65,28 @@ class MzMLFile(val stream: OutputStream) {
         writeln("""<?xml version="1.0" encoding="ISO-8859-1"?>""")
     }
 
+    @Suppress("MaxLineLength")
     fun content(f: MzMLFile.() -> Unit) {
-        writeln("""<indexedmzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0_idx.xsd">""")
-        writeln("""<mzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd" id="urn:lsid:net.nprod:mzML.instanceDocuments.iwillnotcomplainthatmyfileisbroken" version="1.1.0">""")
         writeln(
-            """
-            <cvList count="2">
+            """<indexedmzML xmlns="http://psi.hupo.org/ms/mzml" 
+            | xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+            | xsi:schemaLocation="http://psi.hupo.org/ms/mzml
+            | http://psidev.info/files/ms/mzML/xsd/mzML1.1.0_idx.xsd">"""
+                .trimMargin()
+        )
+        writeln(
+            """<mzML xmlns="http://psi.hupo.org/ms/mzml"
+            | xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            | xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd"
+            | id="urn:lsid:net.nprod:mzML.instanceDocuments.iwillnotcomplainthatmyfileisbroken" version="1.1.0">"""
+                .trimMargin()
+        )
+        writeln(
+            """<cvList count="2">
                 <cv id="MS" fullName="Proteomics Standards Initiative Mass Spectrometry Ontology" version="2.26.0" URI="http://psidev.cvs.sourceforge.net/*checkout*/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo"/>
                 <cv id="UO" fullName="Unit Ontology" version="14:07:2009" URI="http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/unit.obo"/>
             </cvList>
-        """.trimIndent()
+            """.trimIndent()
         )
         writeln("<fileDescription></fileDescription>")
         this.apply(f)
@@ -136,7 +149,6 @@ class MzMLFile(val stream: OutputStream) {
     }
 }
 
-
 class ReferenceableParamGroupList {
     val referenceableParamGroups = mutableMapOf<String, List<Param>>()
     fun group(groupName: String, f: ParamBuilder.() -> Unit) {
@@ -155,5 +167,3 @@ fun mzMLfile(stream: OutputStream, f: MzMLFile.() -> Unit) {
     file.apply(f)
     stream.close()
 }
-
-

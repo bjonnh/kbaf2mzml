@@ -16,8 +16,6 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import net.nprod.baf2mzml.XMLsafe
-
 class ParamBuilder {
     val params = mutableListOf<Param>()
     operator fun Param.unaryPlus() {
@@ -41,9 +39,9 @@ data class Param(
     fun toXML(): String {
         var out =
             """<cvParam cvRef="${XMLsafe(cvRef)}" accession="${XMLsafe(accession)}" name="${XMLsafe(name)}" value="${
-                XMLsafe(
-                    value
-                )
+            XMLsafe(
+                value
+            )
             }""""
         unitCvRef?.let { out += """ unitCvRef="${XMLsafe(it)}" """ }
         unitAccession?.let { out += """ unitAccession="${XMLsafe(it)}" """ }
@@ -84,7 +82,8 @@ data class Param(
                 "MS",
                 "MS:1000504",
                 "base peak m/z",
-                number.toString(), unitCvRef = "MS",
+                number.toString(),
+                unitCvRef = "MS",
                 unitAccession = "MS:1000040",
                 unitName = "m/z"
             )

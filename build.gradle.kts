@@ -9,7 +9,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint")
     id("org.jmailen.kotlinter")
     id("org.jetbrains.changelog")
-    //id("org.openjfx.javafxplugin")  // This doesn't work…
+    // id("org.openjfx.javafxplugin")  // This doesn't work…
 }
 
 val compileKotlin: org.jetbrains.kotlin.gradle.tasks.KotlinCompile by tasks
@@ -49,7 +49,6 @@ dependencies {
     val cliktVersion: String by project
     val javafxVersion: String by project
 
-
     implementation(kotlin("stdlib"))
     implementation("org.xerial:sqlite-jdbc:$sqliteVersion")
     implementation("org.apache.commons:commons-text:$apacheCommonsTextVersion")
@@ -64,7 +63,8 @@ dependencies {
     val platform =
         if (os.isLinux) "linux" else if (os.isWindows) "windows" else throw RuntimeException(
             "Your OS isn't managed yet. To port it, you will need to have the bruker library compiled\n" +
-                    " for your OS and your platform, so you will have to contact them. Good luck with that.")
+                " for your OS and your platform, so you will have to contact them. Good luck with that."
+        )
 
     implementation("org.openjfx:javafx-base:$javafxVersion:$platform")
     implementation("org.openjfx:javafx-controls:$javafxVersion:$platform")
@@ -72,7 +72,6 @@ dependencies {
     implementation("org.openjfx:javafx-web:$javafxVersion:$platform")
     implementation("org.openjfx:javafx-media:$javafxVersion:$platform")
     implementation("org.openjfx:javafx-fxml:$javafxVersion:$platform")
-
 }
 /*
 distributions {
@@ -95,7 +94,7 @@ jlink {
     launcher {
         name = "run"
     }
-    //addExtraDependencies("com.github.ajalt.clikt")
+    // addExtraDependencies("com.github.ajalt.clikt")
     imageZip.set(file("$buildDir/kbaf2mzml-$version.zip"))
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
     /*targetPlatform("windows-x64") {

@@ -84,6 +84,7 @@ class Model {
     val inputFiles = FXCollections.observableArrayList<String>()
 }
 
+@Suppress("LongMethod")
 class JavaFX : Application() {
     private val model = Model()
     private val defaultDropColor = Color.web("#9090FF")
@@ -124,9 +125,8 @@ class JavaFX : Application() {
         thread {
             task.run()
         }
-        //processFiles.start(inputs, model.outputDirectory.value)
+        // processFiles.start(inputs, model.outputDirectory.value)
     }
-
 
     override fun start(stage: Stage) {
 

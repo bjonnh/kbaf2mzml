@@ -62,12 +62,12 @@ data class ProfileData(
 )
 
 data class LineData(
-    //val index: Array<Int>,
+    // val index: Array<Int>,
     val mz: DoubleArray,
     val intensity: DoubleArray,
-    //val indexWidth: DoubleArray,
-    //val peakArea: DoubleArray,
-    //val snr: DoubleArray
+    // val indexWidth: DoubleArray,
+    // val peakArea: DoubleArray,
+    // val snr: DoubleArray
 )
 
 /**
