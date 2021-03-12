@@ -2,6 +2,8 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
+fun properties(key: String) = project.findProperty(key).toString()
+
 plugins {
     kotlin("jvm")
     application
@@ -20,11 +22,17 @@ compileJava.destinationDir = compileKotlin.destinationDir
 
 val publicationName: String by project
 group = "net.nprod"
-version = "0.0.2"
+
+val version: String by project
+
+changelog {
+    version = properties("version")
+    groups = emptyList()
+}
 
 repositories {
     mavenCentral()
-    jcenter()
+    jcenter() // We are waiting on kotlinx.html to move
 }
 
 application {
