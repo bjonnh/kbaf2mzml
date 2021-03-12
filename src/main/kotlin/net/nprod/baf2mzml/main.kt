@@ -29,6 +29,7 @@ import javafx.application.Platform
 import javafx.beans.binding.Bindings
 import javafx.concurrent.Task
 import javafx.event.EventHandler
+import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -36,15 +37,20 @@ import javafx.scene.control.Label
 import javafx.scene.control.ListView
 import javafx.scene.control.Separator
 import javafx.scene.input.TransferMode
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
+import javafx.scene.text.TextAlignment
 import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import net.nprod.baf2mzml.baf.BAF2SQLFile
 import java.io.File
+import java.util.Properties
 import kotlin.concurrent.thread
 
 /*
@@ -81,17 +87,31 @@ fun main(args: Array<String>) = Converter().main(args)
  */
 const val DEFAULT_FILTER_LEVEL = 100.0
 
-const val WINDOW_WIDTH = 960.0
+const val WINDOW_WIDTH = 1024.0
 const val WINDOW_HEIGHT = 800.0
 
 const val LIST_WIDTH = 800.0
 const val LIST_HEIGHT = 400.0
 
-const val FONT_SIZE = 32.0
+const val FONT_SIZE = 16.0
+
+const val SPACING_FACTOR = 2
+const val SPACING_FACTOR_LARGE = 3
+
+class PropertiesManager {
+    val properties = Properties()
+    init {
+        val file = this::class.java.getResource("/version.properties").openStream()
+        properties.load(file)
+    }
+
+    fun version(): String = properties["version"]?.toString() ?: "No version defined"
+}
 
 @Suppress("LongMethod")
 class JavaFX : Application() {
     private val model = ApplicationModel()
+    private val propertiesManager = PropertiesManager()
     private val defaultDropColor = Color.web("#9090FF")
     val notSetOutputLabel = "Not set, will write where the input files are"
 
@@ -133,21 +153,33 @@ class JavaFX : Application() {
         // processFiles.start(inputs, model.outputDirectory.value)
     }
 
+    @Suppress("ComplexMethod")
     override fun start(stage: Stage) {
-        val title = Text("BAF2MzML").apply {
+        stage.title = "BAF2MZML v${propertiesManager.version()}"
+
+        val title = Text("BAF2MzML v${propertiesManager.version()}").apply {
             this.fill = Color.web("#FF0090")
             this.font = Font(FONT_SIZE)
         }
 
-        val dropLabel = Text("\n\nDrop input directories here\n\n")
-
+        val dropLabel = Text("Drop one or more analysis here")
         dropLabel.fill = defaultDropColor
         dropLabel.font = Font(2 * FONT_SIZE)
-        val outputBtn = Button("Select Output Directory")
+
+        val orLabel = Text("Or").also {
+            it.font = Font(FONT_SIZE)
+            it.textAlignment = TextAlignment.CENTER
+        }
+
+        val inputBtn = Button("Select a single analysis")
+        inputBtn.font = Font(FONT_SIZE)
+
+        val thenLabel = Text("Then")
+        thenLabel.font = Font(FONT_SIZE)
+
+        val outputBtn = Button("Select Output Directory (optional)")
         outputBtn.font = Font(FONT_SIZE)
 
-        val outputDirLabelHelp = Label("Output Directory: ")
-        outputDirLabelHelp.font = Font(FONT_SIZE)
         val outputDirLabel = Label(notSetOutputLabel).also {
             it.textProperty().bind(
                 Bindings.`when`(model.outputDirectory.isNull).then(
@@ -156,14 +188,16 @@ class JavaFX : Application() {
             )
         }
 
-        val outDirBox = HBox(outputDirLabelHelp, outputDirLabel)
-        outDirBox.alignment = Pos.CENTER_LEFT
-
         val directoryChooser = DirectoryChooser()
 
         outputBtn.setOnAction {
             val file: File? = directoryChooser.showDialog(stage)
             if (file != null) model.outputDirectory.set(file.absolutePath)
+        }
+
+        inputBtn.setOnAction {
+            val file: File? = directoryChooser.showDialog(stage)
+            if (file != null) model.inputFiles.add(file.absolutePath)
         }
 
         val list: ListView<String> = ListView<String>()
@@ -182,7 +216,42 @@ class JavaFX : Application() {
             }
         }
 
-        val pane = VBox(title, dropLabel, outputBtn, outDirBox, ruler, inputName, list, processBtn)
+        val exitBtn = Button("Exit")
+        exitBtn.font = Font(FONT_SIZE)
+        exitBtn.onAction = EventHandler {
+            stage.close()
+        }
+
+        val pane = VBox(
+            title,
+            VBox(dropLabel, orLabel, inputBtn).also {
+                it.alignment = Pos.CENTER
+                it.spacing = FONT_SIZE * SPACING_FACTOR
+                it.background = Background(BackgroundFill(Color.BEIGE, CornerRadii.EMPTY, Insets.EMPTY))
+            },
+            VBox(
+                thenLabel,
+                HBox(outputBtn, outputDirLabel).also {
+                    it.alignment = Pos.CENTER
+                    it.spacing = FONT_SIZE * SPACING_FACTOR
+                }
+            ).also {
+                it.alignment = Pos.CENTER
+                it.spacing = FONT_SIZE * SPACING_FACTOR
+                it.padding = Insets(FONT_SIZE * SPACING_FACTOR)
+            },
+            ruler,
+            inputName,
+            list,
+            HBox(processBtn, exitBtn).also {
+                it.alignment = Pos.CENTER
+                it.padding = Insets(FONT_SIZE)
+                it.spacing = WINDOW_WIDTH / SPACING_FACTOR_LARGE
+            }
+
+        ).also {
+            it.alignment = Pos.CENTER
+        }
 
         with(pane) {
             this.onDragOver = EventHandler { event ->

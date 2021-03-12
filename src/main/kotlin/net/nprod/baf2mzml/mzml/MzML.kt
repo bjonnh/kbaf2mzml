@@ -62,10 +62,7 @@ class MzMLFile(val stream: OutputStream) {
     @Suppress("MaxLineLength")
     fun content(f: MzMLFile.() -> Unit) {
         writeln(
-            """<indexedmzML xmlns="http://psi.hupo.org/ms/mzml" 
-            | xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-            | xsi:schemaLocation="http://psi.hupo.org/ms/mzml
-            | http://psidev.info/files/ms/mzML/xsd/mzML1.1.0_idx.xsd">"""
+            """<indexedmzML xmlns="http://psi.hupo.org/ms/mzml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psidev.info/files/ms/mzML/xsd/mzML1.1.0_idx.xsd">"""
                 .trimMargin()
         )
         writeln(

@@ -37,13 +37,21 @@ class MzMLWriter(file: File, val sampleName: String, val baf2SQL: BAF2SQLFile) {
             addDeclaration()
             content {
                 referenceableParamsGroupList {
-                    group("CommonMS1SpectrumParams") {
+                    group("CommonMS1PosSpectrumParams") {
                         +Param.MS1
                         +Param.POSITIVE
                     }
-                    group("CommonMS2SpectrumParams") {
+                    group("CommonMS2PosSpectrumParams") {
                         +Param.MSn
                         +Param.POSITIVE
+                    }
+                    group("CommonMS1NegSpectrumParams") {
+                        +Param.MS1
+                        +Param.NEGATIVE
+                    }
+                    group("CommonMS2NegSpectrumParams") {
+                        +Param.MSn
+                        +Param.NEGATIVE
                     }
                 }
 

@@ -70,6 +70,12 @@ data class LineData(
     // val snr: DoubleArray
 )
 
+enum class Polarity(val representation: String) {
+    POSITIVE("+"),
+    NEGATIVE("-"),
+    UNKNOWN("u")
+}
+
 /**
  * This is huge as we are directly loading data. If really it is a bottleneck in some applications, this will
  * have to be rewritten as a lazy loader.
@@ -88,4 +94,11 @@ data class Spectrum(
     val transformatorId: Int,
     val profileData: ProfileData?,
     val lineData: LineData?
-)
+) {
+    val polarity: Polarity
+        get() = when (acquisitionKey.polarity) {
+            0 -> Polarity.POSITIVE
+            1 -> Polarity.NEGATIVE
+            else -> Polarity.UNKNOWN
+        }
+}

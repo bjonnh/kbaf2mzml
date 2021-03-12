@@ -21,6 +21,7 @@ package net.nprod.baf2mzml
 import net.nprod.baf2mzml.exceptions.FeatureMissingException
 import net.nprod.baf2mzml.helpers.base64ArrayEncoder
 import net.nprod.baf2mzml.schema.LineData
+import net.nprod.baf2mzml.schema.Polarity
 import net.nprod.baf2mzml.schema.Spectrum
 import kotlin.time.seconds
 
@@ -97,6 +98,7 @@ data class Run(
         this.spectrumSource = source
     }
 
+    @Suppress("ComplexMethod")
     fun writeSpectrumList(mzMLFile: MzMLFile, source: List<Spectrum>) {
         with(mzMLFile) {
             writeln("""<spectrumList count="${source.size}" defaultDataProcessingRef="kbaf_processing">""")
@@ -111,9 +113,22 @@ data class Run(
                     | defaultArrayLength="${spectrum.lineData?.mz?.size}">""".trimMargin()
                 )
 
-                when (spectrum.acquisitionKey.msLevel) {
-                    0 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS1SpectrumParams"/>""")
-                    1 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS2SpectrumParams"/>""")
+                val commonSpectrumParameters = when (spectrum.polarity) {
+                    Polarity.POSITIVE -> when (spectrum.acquisitionKey.msLevel) {
+                        0 -> "CommonMS1PosSpectrumParams"
+                        1 -> "CommonMS2PosSpectrumParams"
+                        else -> null
+                    }
+                    Polarity.NEGATIVE -> when (spectrum.acquisitionKey.msLevel) {
+                        0 -> "CommonMS1NegSpectrumParams"
+                        1 -> "CommonMS2NegSpectrumParams"
+                        else -> null
+                    }
+                    else -> null
+                }
+
+                commonSpectrumParameters?.let {
+                    mzMLFile.writeln("""<referenceableParamGroupRef ref="$it"/>""")
                 }
 
                 write(Param.msLevel(spectrum.acquisitionKey.msLevel + 1))
@@ -150,23 +165,33 @@ data class Run(
                 | name="scan start time" value="${spectrum.rt.seconds.inMinutes}" unitCvRef="UO"
                 | unitAccession="UO:0000031" unitName="minute"/>""".trimMargin()
             )
+
+            val polarity = spectrum.polarity.representation
+
             writeln(
                 """       <cvParam cvRef="MS" accession="MS:1000512"
-                | name="filter string" value="+ c TODO!!!"/>""".trimMargin()
+                | name="filter string" value="$polarity c TODO!!!"/>""".trimMargin()
             )
+
             writeln(
                 """       <scanWindowList count="1"><scanWindow>"""
             )
+
+            val minimum = spectrum.mzAcqRangeLower
+
             writeln(
-                """<cvParam cvRef="MS" accession="MS:1000501" name="scan window lower limit" 
-                    | value="400" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
-"""
+                """<cvParam cvRef="MS" accession="MS:1000501" name="scan window lower limit" value="$minimum"
+                    | unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin()
             )
+
+            val maximum = spectrum.mzAcqRangeUpper
+
             writeln(
                 """<cvParam cvRef="MS" accession="MS:1000500" name="scan window upper limit"
-                    | value="1800" unitCvRef="MS"
+                    | value="$maximum" unitCvRef="MS"
                     |  unitAccession="MS:1000040" unitName="m/z"/></scanWindow></scanWindowList>""".trimMargin()
             )
+
             writeln("    </scan>")
             writeln("  </scanList>")
         }

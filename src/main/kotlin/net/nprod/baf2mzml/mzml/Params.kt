@@ -57,6 +57,7 @@ data class Param(
         val MS1: Param = Param("MS", "MS:1000579", "MS1 spectrum", "")
         val MSn: Param = Param("MS", "MS:1000580", "MSn spectrum", "")
         val POSITIVE: Param = Param("MS", "MS:1000130", "positive scan", "")
+        val NEGATIVE: Param = Param("MS", "MS:1000129", "negative scan", "")
         val noCombination: Param = Param("MS", "MS:1000795", "no combination", "")
         fun lowMass(number: Number) =
             Param(

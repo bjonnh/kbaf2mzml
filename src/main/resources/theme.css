@@ -2,13 +2,13 @@
 .root {
     -fx-accent: #1a6ee4;
     -fx-focus-color: -fx-accent;
-    -fx-base: #111;
+    -fx-base: #eee;
     -fx-control-inner-background: derive(-fx-base,50%);
     -fx-control-inner-background-alt: derive(-fx-control-inner-background, 30%);
 }
 
 .label{
-    -fx-text-fill: lightgray;
+    -fx-text-fill: #111;
 }
 
 .importantLabel {

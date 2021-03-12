@@ -1,5 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 plugins {
     kotlin("jvm")
@@ -19,11 +20,7 @@ compileJava.destinationDir = compileKotlin.destinationDir
 
 val publicationName: String by project
 group = "net.nprod"
-version = "0.0.1" + if (System.getProperty("snapshot")?.isEmpty() != false) {
-    ""
-} else {
-    "-SNAPSHOT"
-}
+version = "0.0.2"
 
 repositories {
     mavenCentral()
@@ -149,4 +146,18 @@ kotlin {
             useExperimentalAnnotation("kotlin.time.ExperimentalTime")
         }
     }
+}
+
+task("createProperties") {
+    doLast {
+        File("${project.rootDir}/src/main/resources/version.properties").writer().use { w ->
+            val p = Properties()
+            p["version"] = project.version.toString()
+            p.store(w, "Automatically generated")
+        }
+    }
+}
+
+tasks.named("classes") {
+    dependsOn("createProperties")
 }
