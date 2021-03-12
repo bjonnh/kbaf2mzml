@@ -1,4 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 
 plugins {
     kotlin("jvm")
@@ -131,5 +133,12 @@ tasks {
                 }
             }
         }
+    }
+}
+
+// Use the new compiler
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        useIR = true
     }
 }
