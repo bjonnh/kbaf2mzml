@@ -46,7 +46,7 @@ java {
 val os: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
 
 val platform =
-    if (os.isLinux) "linux" else if (os.isWindows) "windows" else throw RuntimeException(
+    if (os.isLinux) "linux" else if (os.isWindows) "win" else throw RuntimeException(
         "Your OS isn't managed yet. To port it, you will need to have the bruker library compiled\n" +
             " for your OS and your platform, so you will have to contact them. Good luck with that."
     )
