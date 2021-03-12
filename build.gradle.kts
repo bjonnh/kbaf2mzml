@@ -43,6 +43,14 @@ java {
     modularity.inferModulePath.set(true)
 }
 
+val os: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
+
+val platform =
+    if (os.isLinux) "linux" else if (os.isWindows) "windows" else throw RuntimeException(
+        "Your OS isn't managed yet. To port it, you will need to have the bruker library compiled\n" +
+                " for your OS and your platform, so you will have to contact them. Good luck with that."
+    )
+
 dependencies {
     val coroutinesVersion: String by project
     val sqliteVersion: String by project
@@ -59,13 +67,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:$coroutinesVersion")
-
-    val os: OperatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
-    val platform =
-        if (os.isLinux) "linux" else if (os.isWindows) "windows" else throw RuntimeException(
-            "Your OS isn't managed yet. To port it, you will need to have the bruker library compiled\n" +
-                " for your OS and your platform, so you will have to contact them. Good luck with that."
-        )
 
     implementation("org.openjfx:javafx-base:$javafxVersion:$platform")
     implementation("org.openjfx:javafx-controls:$javafxVersion:$platform")
@@ -96,7 +97,7 @@ jlink {
         name = "run"
     }
     // addExtraDependencies("com.github.ajalt.clikt")
-    imageZip.set(file("$buildDir/kbaf2mzml-$version.zip"))
+    imageZip.set(file("$buildDir/$platform-kbaf2mzml-$version.zip"))
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
     /*targetPlatform("windows-x64") {
         setJdkHome("stuff/jdk-15.0.2+7")
