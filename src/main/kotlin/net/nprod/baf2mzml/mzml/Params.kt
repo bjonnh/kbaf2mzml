@@ -1,4 +1,4 @@
-package net.nprod.baf2mzml/*
+/*
 An ultrafast Bruker BAF to MzML converter
 Copyright (C) 2020 Jonathan Bisson
 
@@ -15,6 +15,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+package net.nprod.baf2mzml
 
 class ParamBuilder {
     val params = mutableListOf<Param>()
@@ -38,7 +40,8 @@ data class Param(
 ) {
     fun toXML(): String {
         var out =
-            """<cvParam cvRef="${xmlSafeString(cvRef)}" accession="${xmlSafeString(accession)}" name="${xmlSafeString(name)}" value="${
+            """<cvParam cvRef="${xmlSafeString(cvRef)}" accession="${xmlSafeString(accession)}" 
+                name="${xmlSafeString(name)}" value="${
             xmlSafeString(
                 value
             )

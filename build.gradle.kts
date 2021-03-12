@@ -142,3 +142,11 @@ tasks.withType<KotlinCompile>().configureEach {
         useIR = true
     }
 }
+
+kotlin {
+    sourceSets.all {
+        languageSettings.apply {
+            useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+        }
+    }
+}

@@ -22,11 +22,6 @@ import org.apache.commons.text.StringEscapeUtils
 import java.io.File
 import java.io.OutputStream
 
-fun BAF2SQLFile.saveAsMzMl(filename: String) {
-    val writer = MzMLWriter(File(filename), "Test", this)
-    writer.execute()
-}
-
 fun xmlSafeString(s: String?): String {
     if (s == null) throw InternalError("Impossible to make a null string safe.")
     return StringEscapeUtils.ESCAPE_XML11.translate(s)

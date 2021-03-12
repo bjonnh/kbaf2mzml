@@ -27,9 +27,6 @@ import com.github.ajalt.clikt.parameters.types.path*/
 import javafx.application.Application
 import javafx.application.Platform
 import javafx.beans.binding.Bindings
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleStringProperty
-import javafx.collections.FXCollections
 import javafx.concurrent.Task
 import javafx.event.EventHandler
 import javafx.geometry.Pos
@@ -46,6 +43,7 @@ import javafx.scene.text.Font
 import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
+import net.nprod.baf2mzml.baf.BAF2SQLFile
 import java.io.File
 import kotlin.concurrent.thread
 
@@ -78,15 +76,22 @@ class Converter : CliktCommand() {
 fun main(args: Array<String>) = Converter().main(args)
 */
 
-class Model {
-    val outputDirectory = SimpleStringProperty()
-    val processing = SimpleBooleanProperty(false)
-    val inputFiles = FXCollections.observableArrayList<String>()
-}
+/**
+ * Minimal peak height that will be converted (in each individual spectrum)
+ */
+const val DEFAULT_FILTER_LEVEL = 100.0
+
+const val WINDOW_WIDTH = 960.0
+const val WINDOW_HEIGHT = 800.0
+
+const val LIST_WIDTH = 800.0
+const val LIST_HEIGHT = 400.0
+
+const val FONT_SIZE = 32.0
 
 @Suppress("LongMethod")
 class JavaFX : Application() {
-    private val model = Model()
+    private val model = ApplicationModel()
     private val defaultDropColor = Color.web("#9090FF")
     val notSetOutputLabel = "Not set, will write where the input files are"
 
@@ -103,7 +108,7 @@ class JavaFX : Application() {
                     val analysis = File(File(it), "analysis.baf")
                     println("Converting ${analysis.absolutePath}")
                     val converter = BAF2SQLFile(analysis.absolutePath)
-                    converter.addLevelFilter(100.0)
+                    converter.setLevelFilter(DEFAULT_FILTER_LEVEL)
 
                     converter.saveAsMzMl(
                         File(
@@ -131,18 +136,18 @@ class JavaFX : Application() {
     override fun start(stage: Stage) {
         val title = Text("BAF2MzML").apply {
             this.fill = Color.web("#FF0090")
-            this.font = Font(32.0)
+            this.font = Font(FONT_SIZE)
         }
 
         val dropLabel = Text("\n\nDrop input directories here\n\n")
 
         dropLabel.fill = defaultDropColor
-        dropLabel.font = Font(64.0)
+        dropLabel.font = Font(2 * FONT_SIZE)
         val outputBtn = Button("Select Output Directory")
-        outputBtn.font = Font(32.0)
+        outputBtn.font = Font(FONT_SIZE)
 
         val outputDirLabelHelp = Label("Output Directory: ")
-        outputDirLabelHelp.font = Font(32.0)
+        outputDirLabelHelp.font = Font(FONT_SIZE)
         val outputDirLabel = Label(notSetOutputLabel).also {
             it.textProperty().bind(
                 Bindings.`when`(model.outputDirectory.isNull).then(
@@ -163,12 +168,13 @@ class JavaFX : Application() {
 
         val list: ListView<String> = ListView<String>()
         Bindings.bindContent(list.items, model.inputFiles)
-        list.setPrefSize(800.0, 400.0)
+
+        list.setPrefSize(LIST_WIDTH, LIST_HEIGHT)
         val ruler = Separator()
         val inputName = Label("Input files")
 
         val processBtn = Button("Process").also {
-            it.font = Font(32.0)
+            it.font = Font(FONT_SIZE)
             it.disableProperty().bind(model.processing)
             it.onAction = EventHandler {
                 processAll()
@@ -208,7 +214,8 @@ class JavaFX : Application() {
             }
         }
         pane.alignment = Pos.CENTER
-        stage.scene = Scene(pane, 960.0, 800.0)
+
+        stage.scene = Scene(pane, WINDOW_WIDTH, WINDOW_HEIGHT)
 
         stage.scene.stylesheets.add("theme.css")
         stage.show()

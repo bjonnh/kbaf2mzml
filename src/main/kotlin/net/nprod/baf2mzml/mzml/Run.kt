@@ -22,6 +22,7 @@ import net.nprod.baf2mzml.exceptions.FeatureMissingException
 import net.nprod.baf2mzml.helpers.base64ArrayEncoder
 import net.nprod.baf2mzml.schema.LineData
 import net.nprod.baf2mzml.schema.Spectrum
+import kotlin.time.seconds
 
 /**
  * DSL class to construct a run.
@@ -45,7 +46,10 @@ class RunsBuilder {
 
     fun newRun(defaultSourceFile: String, defaultInstrumentConfiguration: String, f: Run.() -> Unit) {
         val run =
-            Run(defaultInstrumentConfiguration = defaultInstrumentConfiguration, defaultSourceFile = defaultSourceFile)
+            net.nprod.baf2mzml.Run(
+                defaultInstrumentConfiguration = defaultInstrumentConfiguration,
+                defaultSourceFile = defaultSourceFile
+            )
         (+run).apply(f)
     }
 }
@@ -67,13 +71,13 @@ data class Run(
     fun writeToFile(mzMLFile: MzMLFile) {
         mzMLFile.writeln(
             """<run id="${xmlSafeString(id)}" defaultInstrumentConfigurationRef="${
-            xmlSafeString(
-                defaultInstrumentConfiguration
-            )
+                xmlSafeString(
+                    defaultInstrumentConfiguration
+                )
             }" defaultSourceFileRef="${
-            xmlSafeString(
-                defaultSourceFile
-            )
+                xmlSafeString(
+                    defaultSourceFile
+                )
             }">"""
         )
 
@@ -94,13 +98,16 @@ data class Run(
     }
 
     fun writeSpectrumList(mzMLFile: MzMLFile, source: List<Spectrum>) {
-        with(mzMLFile) { writeln("""<spectrumList count="${source.size}" defaultDataProcessingRef="kbaf_processing">""") }
+        with(mzMLFile) {
+            writeln("""<spectrumList count="${source.size}" defaultDataProcessingRef="kbaf_processing">""")
+        }
 
         source.mapIndexed { index, spectrum ->
             val id = "scan=${spectrum.id}"
             mzMLFile.run {
                 addOffset(id)
-                writeln("""<spectrum index="$index" id="$id" defaultArrayLength="${spectrum.lineData?.mz?.size}">""")
+                writeln("""<spectrum index="$index" id="$id"
+                    | defaultArrayLength="${spectrum.lineData?.mz?.size}">""".trimMargin())
 
                 when (spectrum.acquisitionKey.msLevel) {
                     0 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS1SpectrumParams"/>""")
@@ -136,17 +143,27 @@ data class Run(
             writeln("""  <scanList count="1">""")
             write(Param.noCombination)
             writeln("""    <scan instrumentConfigurationRef="ImpactII">""")
-            writeln("""       <cvParam cvRef="MS" accession="MS:1000016" name="scan start time" value="${spectrum.rt / 60}" unitCvRef="UO" unitAccession="UO:0000031" unitName="minute"/>""")
-            writeln("""       <cvParam cvRef="MS" accession="MS:1000512" name="filter string" value="+ c TODO!!!"/>""")
+            writeln(
+                """       <cvParam cvRef="MS" accession="MS:1000016" 
+                | name="scan start time" value="${spectrum.rt.seconds.inMinutes}" unitCvRef="UO"
+                | unitAccession="UO:0000031" unitName="minute"/>""".trimMargin()
+            )
+            writeln(
+                """       <cvParam cvRef="MS" accession="MS:1000512"
+                | name="filter string" value="+ c TODO!!!"/>""".trimMargin()
+            )
             writeln(
                 """       <scanWindowList count="1"><scanWindow>"""
             )
             writeln(
-                """<cvParam cvRef="MS" accession="MS:1000501" name="scan window lower limit" value="400" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
+                """<cvParam cvRef="MS" accession="MS:1000501" name="scan window lower limit" 
+                    | value="400" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>
 """
             )
             writeln(
-                """<cvParam cvRef="MS" accession="MS:1000500" name="scan window upper limit" value="1800" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/></scanWindow></scanWindowList>"""
+                """<cvParam cvRef="MS" accession="MS:1000500" name="scan window upper limit"
+                    | value="1800" unitCvRef="MS"
+                    |  unitAccession="MS:1000040" unitName="m/z"/></scanWindow></scanWindowList>""".trimMargin()
             )
             writeln("    </scan>")
             writeln("  </scanList>")
@@ -161,14 +178,20 @@ data class Run(
                     writeln("""  <precursor spectrumRef="scan=${spectrum.parent}">""")
                     writeln("""    <selectedIonList count="1">""")
                     writeln("""      <selectedIon>""")
-                    writeln("""        <cvParam cvRef="MS" accession="MS:1000744" name="selected ion m/z" value="${spectrum.acquisitionData.msmsIsolationmassAct}" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""")
+                    writeln("""        <cvParam cvRef="MS" accession="MS:1000744"
+                        | name="selected ion m/z"
+                        |  value="${spectrum.acquisitionData.msmsIsolationmassAct}"
+                        |   unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin())
                     writeln("""      </selectedIon>""")
                     writeln("""    </selectedIonList>""")
                     writeln("""    <activation>""")
-                    writeln("""      <cvParam cvRef="MS" accession="MS:1000133" name="collision-induced dissociation" value=""/>""")
+                    writeln("""      <cvParam cvRef="MS" accession="MS:1000133"
+                        | name="collision-induced dissociation" value=""/>""".trimMargin())
                     writeln(
-                        """      <cvParam cvRef="MS" accession="MS:1000045" name="collision energy" value="${spectrum.acquisitionData.collisionEnergyAct ?: 0.0}" unitCvRef="UO"""" +
-                            """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
+                        """      <cvParam cvRef="MS" accession="MS:1000045"
+                            | name="collision energy" value="${spectrum.acquisitionData.collisionEnergyAct ?: 0.0}"
+                            |  unitCvRef="UO"""".trimMargin() +
+                                """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
                     )
                     writeln("""    </activation>""")
                     writeln("""  </precursor>""")
@@ -206,9 +229,11 @@ data class Run(
             }
             writeln("""  <cvParam cvRef="MS" accession="MS:1000576" name="no compression" value=""/>""")
             if (mz) {
-                writeln("""<cvParam cvRef="MS" accession="MS:1000514" name="m/z array" value="" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""")
+                writeln("""<cvParam cvRef="MS" accession="MS:1000514" name="m/z array"
+                    | value="" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin())
             } else {
-                writeln("""<cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value="" unitCvRef="MS" unitAccession="MS:1000131" unitName="number of counts"/>""")
+                writeln("""<cvParam cvRef="MS" accession="MS:1000515" name="intensity array"
+                    | value="" unitCvRef="MS" unitAccession="MS:1000131" unitName="number of counts"/>""".trimMargin())
             }
             write("<binary>")
             write(encoded)

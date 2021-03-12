@@ -1,83 +1,35 @@
-/*
-An ultrafast Bruker BAF to MzML converter
-Copyright (C) 2020 Jonathan Bisson
+package net.nprod.baf2mzml.baf
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
-package net.nprod.baf2mzml
-
+import net.nprod.baf2mzml.BAF2SQL
+import net.nprod.baf2mzml.BinaryStorage
 import net.nprod.baf2mzml.exceptions.FileFormatException
-import net.nprod.baf2mzml.schema.*
+import net.nprod.baf2mzml.mzml.MzMLWriter
+import net.nprod.baf2mzml.schema.AcquisitionKey
+import net.nprod.baf2mzml.schema.LineData
+import net.nprod.baf2mzml.schema.ProfileData
+import net.nprod.baf2mzml.schema.Spectrum
+import net.nprod.baf2mzml.schema.SpectrumAcquisitionData
+import net.nprod.baf2mzml.schema.SupportedVariable
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
-
-typealias BinaryStorage = Long
-
-class BAFDoubleArray(var ret: Int, var length: Long, var array: DoubleArray)
-
-class NumElements(var ret: Int, var value: Long) {
-
-    override fun toString(): String {
-        return ("Return: ${this.ret} Value: ${this.value}")
-    }
-}
-
-@Suppress("FunctionNaming")
-object BAF2SQL {
-    init {
-        listOf(
-            File(System.getProperty("sun.boot.library.path")).parent,
-            System.getProperty("user.dir"),
-            System.getenv("APP_HOME")
-        ).map { homeFile ->
-            val libFile = File(homeFile, "lib")
-            try {
-                if (System.getProperty("os.name") == "Linux") {
-
-                    System.load(File(libFile, "libbaf2sql_c.so").absolutePath)
-                    System.load(File(libFile, "libbaf2sql_adapter.so").absolutePath)
-                } else {
-                    System.load(File(libFile, "baf2sql_c.dll").absolutePath)
-                    System.load(File(libFile, "baf2sql_adapter.dll").absolutePath)
-                }
-            } catch (e: UnsatisfiedLinkError) {
-                println("Couldn't find library in $libFile")
-            }
-        }
-        c_baf2sql_set_num_threads(4) // try to keep that at n_cores/2 or even n_cores/4
-    }
-
-    external fun c_baf2sql_get_sqlite_cache_filename(fileName: String): String
-    external fun c_baf2sql_array_open_storage_calibrated(fileName: String): BinaryStorage
-    external fun c_baf2sql_array_close_storage(storage: BinaryStorage): Int
-    external fun c_baf2sql_get_last_error_string(): String
-    external fun c_baf2sql_set_num_threads(threads: Int)
-    external fun c_baf2sql_array_get_num_elements(handle: BinaryStorage, id: Long): NumElements
-    external fun c_baf2sql_read_double_array(handle: BinaryStorage, id: Long): BAFDoubleArray?
-}
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.seconds
 
 /**
  * Handle BAF files
  * this assumes you have enough memory, we are not going to stream from disk
+ *
+ * @param filename Path of the file
  */
 class BAF2SQLFile(val filename: String) {
     private var levelFilter: Double? = null
     private var sqliteDb: String? = null
     private var storage: BinaryStorage? = null
     private var connection: Connection? = null
+
+    private val sqliteQueryTimeout: Duration = 30.seconds
 
     /**
      * Show the last error from the C library
@@ -86,7 +38,6 @@ class BAF2SQLFile(val filename: String) {
         get() = BAF2SQL.c_baf2sql_get_last_error_string()
 
     init {
-
         sqliteDb = BAF2SQL.c_baf2sql_get_sqlite_cache_filename(filename)
         storage = BAF2SQL.c_baf2sql_array_open_storage_calibrated(filename)
         connection = DriverManager.getConnection("jdbc:sqlite:$sqliteDb")
@@ -95,19 +46,21 @@ class BAF2SQLFile(val filename: String) {
     /**
      * Close
      */
-
     fun close() {
         storage?.let { BAF2SQL.c_baf2sql_array_close_storage(it) }
         connection?.close()
     }
 
+    /**
+     * Extract the supported variables as a Map
+     */
     fun supportedVariables(): Map<Int, SupportedVariable> {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
 
         val statement = connection?.createStatement()
             ?: throw connectionError()
 
-        statement.queryTimeout = 30
+        statement.queryTimeout = sqliteQueryTimeout.toInt(TimeUnit.SECONDS)
 
         val supportedVariables = mutableMapOf<Int, SupportedVariable>()
 
@@ -117,6 +70,7 @@ class BAF2SQLFile(val filename: String) {
                         " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
             )
 
+        @Suppress("MagicNumber")
         while (rs.next()) {
             supportedVariables[rs.getInt(1)] = SupportedVariable(
                 id = rs.getInt(1),
@@ -142,7 +96,7 @@ class BAF2SQLFile(val filename: String) {
         val statement = connection?.createStatement()
             ?: throw connectionError()
 
-        statement.queryTimeout = 30
+        statement.queryTimeout = sqliteQueryTimeout.toInt(TimeUnit.SECONDS)
 
         /* For now we only handle doubles of 5,7,8 */
         val spectraAcquisitionData = mutableMapOf<Int, MutableMap<Int, Double>>()
@@ -151,6 +105,8 @@ class BAF2SQLFile(val filename: String) {
             statement.executeQuery(
                 "SELECT Spectrum, Variable, Value FROM Variables ORDER BY Spectrum"
             )
+
+        @Suppress("MagicNumber")
         while (rs.next()) {
             val id = rs.getInt(1)
             if (!spectraAcquisitionData.containsKey(id)) spectraAcquisitionData[id] =
@@ -161,6 +117,7 @@ class BAF2SQLFile(val filename: String) {
             }
         }
 
+        @Suppress("MagicNumber")
         return spectraAcquisitionData.map { (id, values) ->
             id to SpectrumAcquisitionData(
                 id = id,
@@ -177,7 +134,7 @@ class BAF2SQLFile(val filename: String) {
         val statement = connection?.createStatement()
             ?: throw connectionError()
 
-        statement.queryTimeout = 30
+        statement.queryTimeout = sqliteQueryTimeout.toInt(TimeUnit.SECONDS)
 
         val acquisitionKeys = mutableMapOf<Int, AcquisitionKey>()
 
@@ -186,6 +143,7 @@ class BAF2SQLFile(val filename: String) {
                 "SELECT Id, Polarity, ScanMode, AcquisitionMode, MsLevel FROM AcquisitionKeys"
             )
 
+        @Suppress("MagicNumber")
         while (rs.next()) {
             acquisitionKeys[rs.getInt(1)] = AcquisitionKey(
                 id = rs.getInt(1),
@@ -199,12 +157,13 @@ class BAF2SQLFile(val filename: String) {
         return acquisitionKeys
     }
 
+    @Suppress("ThrowsCount")
     fun spectraDataAct(id: Int? = null, lineOnly: Boolean = true, func: (Spectrum) -> Unit) {
         require(connection != null && (connection?.isClosed == false)) { "Connection has to be open" }
         val statement = connection?.createStatement()
             ?: throw connectionError()
 
-        statement.queryTimeout = 30
+        statement.queryTimeout = sqliteQueryTimeout.toInt(TimeUnit.SECONDS)
 
         val acquisitionKeys = acquisitionKeys()
         val spectrumAcquisitionData = spectraAcquisitionData()
@@ -217,19 +176,23 @@ class BAF2SQLFile(val filename: String) {
                         "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
                         "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
             )
+
+        @Suppress("MagicNumber")
         while (rs.next()) {
-            val id = rs.getInt(1)
+            val spectrumId = rs.getInt(1)
             val parentId = rs.getInt(5)
 
             func(
                 Spectrum(
-                    id,
+                    spectrumId,
                     rt = rs.getDouble(2),
                     segment = rs.getInt(3),
                     acquisitionKey = acquisitionKeys[rs.getInt(4)]
-                        ?: throw IllegalArgumentException("Invalid acquisition key for spectrum $id: ${rs.getInt(4)}"),
-                    acquisitionData = spectrumAcquisitionData[id]
-                        ?: throw IllegalArgumentException("No acquisition data for spectrum $id"),
+                        ?: throw IllegalArgumentException(
+                            "Invalid acquisition key for spectrum $spectrumId: ${rs.getInt(4)}"
+                        ),
+                    acquisitionData = spectrumAcquisitionData[spectrumId]
+                        ?: throw IllegalArgumentException("No acquisition data for spectrum $spectrumId"),
                     parent = parentId,
                     mzAcqRangeLower = rs.getInt(6),
                     mzAcqRangeUpper = rs.getInt(7),
@@ -253,6 +216,7 @@ class BAF2SQLFile(val filename: String) {
         }
     }
 
+    @Suppress("ThrowsCount")
     private fun generateProfileData(mzId: Long?, intensityId: Long?): ProfileData? {
         if (mzId == null || intensityId == null) return null
         val localStorage =
@@ -268,7 +232,7 @@ class BAF2SQLFile(val filename: String) {
     }
 
     // for now we only handle mz, intensity and snr
-    @Suppress("LongParameterList")
+    @Suppress("LongParameterList", "ThrowsCount", "UnusedPrivateMember")
     private fun generateLineData(
         indexId: Long?,
         mzId: Long?,
@@ -304,7 +268,18 @@ class BAF2SQLFile(val filename: String) {
         )
     }
 
-    fun addLevelFilter(d: Double) {
+    /**
+     * Set the minimum value for any signal
+     *
+     * @param d Minimal value
+     */
+    fun setLevelFilter(d: Double) {
         levelFilter = d
     }
+
+    fun saveAsMzMl(filename: String) {
+        val writer = MzMLWriter(File(filename), "Test", this)
+        writer.execute()
+    }
 }
+
