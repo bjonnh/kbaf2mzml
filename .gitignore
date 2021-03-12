@@ -5,3 +5,4 @@
 /baf2sql_adapter/build/
 /baf2sql_adapter/.gradle/
 /converter/build/
+/src/main/resources/version.properties
