@@ -18,10 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package net.nprod.baf2mzml.mzml
 
-import net.nprod.baf2mzml.baf.BAF2SQLFile
 import net.nprod.baf2mzml.Offset
 import net.nprod.baf2mzml.Param
 import net.nprod.baf2mzml.Sample
+import net.nprod.baf2mzml.baf.BAF2SQLFile
 import net.nprod.baf2mzml.mzMLfile
 import net.nprod.baf2mzml.schema.Spectrum
 import java.io.File

@@ -71,13 +71,13 @@ data class Run(
     fun writeToFile(mzMLFile: MzMLFile) {
         mzMLFile.writeln(
             """<run id="${xmlSafeString(id)}" defaultInstrumentConfigurationRef="${
-                xmlSafeString(
-                    defaultInstrumentConfiguration
-                )
+            xmlSafeString(
+                defaultInstrumentConfiguration
+            )
             }" defaultSourceFileRef="${
-                xmlSafeString(
-                    defaultSourceFile
-                )
+            xmlSafeString(
+                defaultSourceFile
+            )
             }">"""
         )
 
@@ -106,8 +106,10 @@ data class Run(
             val id = "scan=${spectrum.id}"
             mzMLFile.run {
                 addOffset(id)
-                writeln("""<spectrum index="$index" id="$id"
-                    | defaultArrayLength="${spectrum.lineData?.mz?.size}">""".trimMargin())
+                writeln(
+                    """<spectrum index="$index" id="$id"
+                    | defaultArrayLength="${spectrum.lineData?.mz?.size}">""".trimMargin()
+                )
 
                 when (spectrum.acquisitionKey.msLevel) {
                     0 -> mzMLFile.writeln("""<referenceableParamGroupRef ref="CommonMS1SpectrumParams"/>""")
@@ -178,20 +180,24 @@ data class Run(
                     writeln("""  <precursor spectrumRef="scan=${spectrum.parent}">""")
                     writeln("""    <selectedIonList count="1">""")
                     writeln("""      <selectedIon>""")
-                    writeln("""        <cvParam cvRef="MS" accession="MS:1000744"
+                    writeln(
+                        """        <cvParam cvRef="MS" accession="MS:1000744"
                         | name="selected ion m/z"
                         |  value="${spectrum.acquisitionData.msmsIsolationmassAct}"
-                        |   unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin())
+                        |   unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin()
+                    )
                     writeln("""      </selectedIon>""")
                     writeln("""    </selectedIonList>""")
                     writeln("""    <activation>""")
-                    writeln("""      <cvParam cvRef="MS" accession="MS:1000133"
-                        | name="collision-induced dissociation" value=""/>""".trimMargin())
+                    writeln(
+                        """      <cvParam cvRef="MS" accession="MS:1000133"
+                        | name="collision-induced dissociation" value=""/>""".trimMargin()
+                    )
                     writeln(
                         """      <cvParam cvRef="MS" accession="MS:1000045"
                             | name="collision energy" value="${spectrum.acquisitionData.collisionEnergyAct ?: 0.0}"
                             |  unitCvRef="UO"""".trimMargin() +
-                                """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
+                            """ unitAccession="UO:0000266" unitName="electronvolt"/>"""
                     )
                     writeln("""    </activation>""")
                     writeln("""  </precursor>""")
@@ -229,11 +235,15 @@ data class Run(
             }
             writeln("""  <cvParam cvRef="MS" accession="MS:1000576" name="no compression" value=""/>""")
             if (mz) {
-                writeln("""<cvParam cvRef="MS" accession="MS:1000514" name="m/z array"
-                    | value="" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin())
+                writeln(
+                    """<cvParam cvRef="MS" accession="MS:1000514" name="m/z array"
+                    | value="" unitCvRef="MS" unitAccession="MS:1000040" unitName="m/z"/>""".trimMargin()
+                )
             } else {
-                writeln("""<cvParam cvRef="MS" accession="MS:1000515" name="intensity array"
-                    | value="" unitCvRef="MS" unitAccession="MS:1000131" unitName="number of counts"/>""".trimMargin())
+                writeln(
+                    """<cvParam cvRef="MS" accession="MS:1000515" name="intensity array"
+                    | value="" unitCvRef="MS" unitAccession="MS:1000131" unitName="number of counts"/>""".trimMargin()
+                )
             }
             write("<binary>")
             write(encoded)

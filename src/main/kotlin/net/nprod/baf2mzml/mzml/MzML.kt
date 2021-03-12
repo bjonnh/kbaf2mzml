@@ -19,7 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package net.nprod.baf2mzml
 
 import org.apache.commons.text.StringEscapeUtils
-import java.io.File
 import java.io.OutputStream
 
 fun xmlSafeString(s: String?): String {

@@ -20,7 +20,7 @@ package net.nprod.baf2mzml.helpers
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.*
+import java.util.Base64
 
 /**
  * Convert a DoubleArray to a Base64 encoded byte array

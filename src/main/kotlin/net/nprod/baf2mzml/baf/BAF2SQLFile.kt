@@ -67,7 +67,7 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Variable, PermanentName, Type, DisplayGroupName," +
-                        " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
+                    " DisplayValueText, DisplayFormat, DisplayDimension FROM SupportedVariables"
             )
 
         @Suppress("MagicNumber")
@@ -88,7 +88,7 @@ class BAF2SQLFile(val filename: String) {
 
     private fun connectionError() = IllegalStateException(
         "Connection is not open, something failed with the database " +
-                "and this was not expected, this may be due to a faulty file."
+            "and this was not expected, this may be due to a faulty file."
     )
 
     fun spectraAcquisitionData(): Map<Int, SpectrumAcquisitionData> {
@@ -171,10 +171,10 @@ class BAF2SQLFile(val filename: String) {
         val rs =
             statement.executeQuery(
                 "SELECT Id, Rt, Segment, AcquisitionKey, Parent, MzAcqRangeLower, MzAcqRangeUpper, " +
-                        "SumIntensity, MaxIntensity, TransformatorId," +
-                        "ProfileMzId, ProfileIntensityId, " +
-                        "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
-                        "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
+                    "SumIntensity, MaxIntensity, TransformatorId," +
+                    "ProfileMzId, ProfileIntensityId, " +
+                    "LineIndexId, LineMzId, LineIntensityId, LineIndexWidthId, LinePeakAreaId, LineSnrId " +
+                    "FROM Spectra" + if (id != null) " WHERE Id=$id" else ""
             )
 
         @Suppress("MagicNumber")
@@ -282,4 +282,3 @@ class BAF2SQLFile(val filename: String) {
         writer.execute()
     }
 }
-
