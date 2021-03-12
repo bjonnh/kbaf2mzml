@@ -59,7 +59,7 @@ jobs:
       - name: Run Linters and Test
         run: ./gradlew check
 
-  # Build plugin with buildPlugin Gradle task and provide the artifact for the next workflow jobs
+  # Build project and provide the artifact for the next workflow jobs
   # Requires test job to be passed
   build:
     name: Build
@@ -104,7 +104,7 @@ jobs:
         run: |
           PROPERTIES="$(./gradlew properties --console=plain -q)"
           VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
-          NAME="$(echo "$PROPERTIES" | grep "^pluginName:" | cut -f2- -d ' ')"
+          NAME="$(echo "$PROPERTIES" | grep "^projectName:" | cut -f2- -d ' ')"
           CHANGELOG="$(./gradlew getChangelog --unreleased --no-header --console=plain -q)"
           CHANGELOG="${CHANGELOG//'%'/'%25'}"
           CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
